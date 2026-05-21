@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 
@@ -13,21 +13,7 @@ export function IntroSection({ onStart }: IntroSectionProps) {
     "split"
   );
 
-  // Lock scroll when not in article stage
-  useEffect(() => {
-    if (stage !== "article") {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
-    }
 
-    return () => {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
-    };
-  }, [stage]);
 
   const handleStartClick = () => {
     setStage("zoom");
