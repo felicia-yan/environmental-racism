@@ -171,15 +171,15 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
             {/* Back button - attached to this section */}
             <button
               onClick={() => updateStage("split")}
-              className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
+              className="absolute top-4 left-4 z-10 hover:opacity-80 transition-opacity"
               aria-label="Back to start"
             >
-              <div className="relative w-5 h-5" style={{ transform: 'scaleX(-1)' }}>
+              <div className="relative w-16 h-16" style={{ transform: 'scaleX(-1)' }}>
                 <Image
                   src="/arrow.png"
                   alt="Back"
-                  width={20}
-                  height={20}
+                  width={64}
+                  height={64}
                   className="object-contain"
                 />
               </div>
