@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
 import Image from "next/image";
 
 interface IntroSectionProps {
@@ -175,7 +174,15 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
               className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
               aria-label="Back to start"
             >
-              <ArrowLeft className="w-5 h-5 text-foreground" />
+              <div className="relative w-5 h-5" style={{ transform: 'scaleX(-1)' }}>
+                <Image
+                  src="/arrow.png"
+                  alt="Back"
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
+              </div>
             </button>
             <div className="max-w-3xl text-center relative z-10">
               <div className="mb-12 animate-in fade-in duration-500 delay-300">
