@@ -6,24 +6,27 @@ import Image from "next/image";
 
 interface IntroSectionProps {
   onStart: () => void;
+  onStageChange?: (stage: "split" | "zoom" | "door" | "article") => void;
 }
 
-export function IntroSection({ onStart }: IntroSectionProps) {
+export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
   const [stage, setStage] = useState<"split" | "zoom" | "door" | "article">(
     "split"
   );
 
-
-
+  const updateStage = (newStage: "split" | "zoom" | "door" | "article") => {
+    setStage(newStage);
+    onStageChange?.(newStage);
+  };
 
   const handleStartClick = () => {
-    setStage("zoom");
+    updateStage("zoom");
   };
 
   const handleDoorClick = () => {
-    setStage("door");
+    updateStage("door");
     setTimeout(() => {
-      setStage("article");
+      updateStage("article");
     }, 800);
   };
 
@@ -81,28 +84,19 @@ export function IntroSection({ onStart }: IntroSectionProps) {
           </div>
           {/* Right half - Door with greenery */}
           <div className="w-1/2 relative overflow-hidden">
-            {/* Doorway background image */}
-            <Image
-              src="/doorway.png"
-              alt="Doorway"
-              fill
-              className="object-cover"
-              priority
-            />
-            {/* Clickable door handle - positioned over the handle in the image */}
+            {/* Doorway background image - entire door is clickable */}
             <button
               onClick={handleStartClick}
-              className="absolute cursor-pointer group"
-              style={{
-                left: '56%',
-                top: '52%',
-                width: '8%',
-                height: '8%',
-              }}
-              aria-label="Click door handle to start"
+              className="absolute inset-0 w-full h-full cursor-pointer"
+              aria-label="Click door to start"
             >
-              {/* Subtle highlight effect on hover */}
-              <div className="w-full h-full rounded-full bg-yellow-300/0 group-hover:bg-yellow-300/40 group-hover:shadow-lg group-hover:shadow-yellow-300/50 transition-all duration-300 animate-pulse" />
+              <Image
+                src="/doorway.png"
+                alt="Doorway"
+                fill
+                className="object-cover"
+                priority
+              />
             </button>
           </div>
         </div>
@@ -111,32 +105,23 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 2: Zoom Door to Center */}
       {stage === "zoom" && (
         <div className="fixed inset-0 w-full h-screen z-20 animate-in fade-in duration-300">
-          {/* Full screen doorway image - subtle zoom */}
-          <Image
-            src="/doorway.png"
-            alt="Doorway"
-            fill
-            className="object-cover scale-100"
-            priority
-          />
-          {/* Clickable door handle - positioned over the handle in the zoomed image */}
+          {/* Full screen doorway image - entire door is clickable */}
           <button
             onClick={handleDoorClick}
-            className="absolute cursor-pointer group"
-            style={{
-              left: '54%',
-              top: '50%',
-              width: '6%',
-              height: '8%',
-            }}
-            aria-label="Click door handle to open"
+            className="absolute inset-0 w-full h-full cursor-pointer"
+            aria-label="Click door to open"
           >
-            {/* Highlight effect on hover */}
-            <div className="w-full h-full rounded-full bg-yellow-300/0 group-hover:bg-yellow-300/50 group-hover:shadow-lg group-hover:shadow-yellow-300/60 transition-all duration-300 animate-pulse" />
+            <Image
+              src="/doorway.png"
+              alt="Doorway"
+              fill
+              className="object-cover scale-100"
+              priority
+            />
           </button>
           {/* Hint text */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-foreground/60 text-sm bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full">
-            Click the door handle
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-foreground/60 text-sm bg-white/70 backdrop-blur-sm px-4 py-2 rounded-full pointer-events-none">
+            Click the door to open
           </div>
         </div>
       )}
@@ -170,7 +155,7 @@ export function IntroSection({ onStart }: IntroSectionProps) {
             />
             {/* Back button - attached to this section */}
             <button
-              onClick={() => setStage("split")}
+              onClick={() => updateStage("split")}
               className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
               aria-label="Back to start"
             >
