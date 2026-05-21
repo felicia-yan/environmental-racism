@@ -1,0 +1,224 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Local fonts */
+@font-face {
+  font-family: "Satoshi";
+  src: url("/fonts/Satoshi-Medium.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Stamp Theo";
+  src: url("/fonts/Stamp Theo Block Three.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: #f5f1e8;
+  --foreground: #1a1a1a;
+  --card: #fff5c3;
+  --card-foreground: #1a1a1a;
+  --popover: #fff5c3;
+  --popover-foreground: #1a1a1a;
+  --primary: #d64545;
+  --primary-foreground: #fff9b0;
+  --secondary: #2d6a4f;
+  --secondary-foreground: #fff9b0;
+  --muted: #e8ddd0;
+  --muted-foreground: #4a4a4a;
+  --accent: #2d6a4f;
+  --accent-foreground: #fff9b0;
+  --destructive: #d64545;
+  --destructive-foreground: #fff9b0;
+  --border: #d9ccbd;
+  --input: #fff5c3;
+  --ring: #2d6a4f;
+  --chart-1: #d64545;
+  --chart-2: #2d6a4f;
+  --chart-3: #e8a832;
+  --chart-4: #6b8e23;
+  --chart-5: #8b4513;
+  --radius: 0.5rem;
+
+  /* Custom theme colors */
+  --cream: #fff9b0;
+  --cream-dark: #fff5c3;
+  --red-title: #d64545;
+  --green-accent: #2d6a4f;
+  --green-light: #6b8e23;
+  --grass: #3d5a3d;
+  --grass-dark: #2d4a2d;
+  --tan: #d4c896;
+  --brown: #8b4513;
+  --beige: #f5f1e8;
+
+  --sidebar: #fff9b0;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #d64545;
+  --sidebar-primary-foreground: #fff9b0;
+  --sidebar-accent: #2d6a4f;
+  --sidebar-accent-foreground: #fff9b0;
+  --sidebar-border: #c4b896;
+  --sidebar-ring: #2d6a4f;
+}
+
+/* No dark mode for this project - keeping light cream theme */
+
+@theme inline {
+  --font-sans: "Satoshi", "Geist Fallback";
+  --font-serif: "Satoshi";
+  --font-mono: var(--font-ibm-mono), "Geist Mono", "Geist Mono Fallback";
+
+  /* Custom theme colors */
+  --color-cream: var(--cream);
+  --color-cream-dark: var(--cream-dark);
+  --color-grass: var(--grass);
+  --color-grass-dark: var(--grass-dark);
+  --color-tan: var(--tan);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Distressed/stamp text effect for titles */
+.distressed-text {
+  font-family: "Stamp Theo", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
+/* Grass texture background */
+.grass-bg {
+  background-color: var(--grass);
+  background-image: radial-gradient(
+      circle at 20% 30%,
+      var(--grass-dark) 1px,
+      transparent 1px
+    ),
+    radial-gradient(circle at 80% 70%, var(--grass-dark) 1px, transparent 1px),
+    radial-gradient(
+      circle at 40% 80%,
+      var(--grass-dark) 0.5px,
+      transparent 0.5px
+    ),
+    radial-gradient(
+      circle at 60% 20%,
+      var(--grass-dark) 0.5px,
+      transparent 0.5px
+    );
+  background-size: 20px 20px, 25px 25px, 15px 15px, 18px 18px;
+}
+
+/* Speech bubble card */
+.speech-bubble {
+  position: relative;
+  background: var(--cream-dark);
+  border: 3px solid var(--tan);
+  border-radius: 12px;
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 20px 15px 0 15px;
+  border-style: solid;
+  border-color: var(--cream-dark) transparent transparent transparent;
+}
+
+.speech-bubble::before {
+  content: "";
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 22px 17px 0 17px;
+  border-style: solid;
+  border-color: var(--tan) transparent transparent transparent;
+}
+
+/* Risk level colors */
+.risk-hazardous {
+  color: #c53030;
+  background: #c53030;
+}
+
+.risk-declining {
+  color: #dd6b20;
+  background: #dd6b20;
+}
+
+.risk-still-desirable {
+  color: #d69e2e;
+  background: #d69e2e;
+}
+
+.risk-best {
+  color: #38a169;
+  background: #38a169;
+}
+
+/* Scrollytelling section snap */
+.scroll-section {
+  min-height: 100vh;
+  scroll-snap-align: start;
+}
+
+/* Simulation container */
+.simulation-container {
+  min-height: 70vh;
+  border-radius: 8px;
+  overflow: hidden;
+}
