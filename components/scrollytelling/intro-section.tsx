@@ -111,12 +111,12 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 2: Zoom Door to Center */}
       {stage === "zoom" && (
         <div className="fixed inset-0 w-full h-screen z-20 animate-in fade-in duration-300">
-          {/* Full screen doorway image */}
+          {/* Full screen doorway image - subtle zoom */}
           <Image
             src="/doorway.png"
             alt="Doorway"
             fill
-            className="object-cover animate-in zoom-in-105 duration-500"
+            className="object-cover scale-100"
             priority
           />
           {/* Clickable door handle - positioned over the handle in the zoomed image */}
@@ -144,12 +144,12 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 3: Door Opens */}
       {stage === "door" && (
         <div className="fixed inset-0 w-full h-screen z-30 overflow-hidden animate-in fade-in duration-300">
-          {/* Highway background revealed */}
+          {/* Highway background revealed - not zoomed in */}
           <Image
             src="/highway.png"
             alt="Highway outside"
             fill
-            className="object-cover"
+            className="object-cover scale-100"
             priority
           />
         </div>
@@ -160,12 +160,12 @@ export function IntroSection({ onStart }: IntroSectionProps) {
         <div className="relative w-full">
           {/* Door open reveal - the highway scene */}
           <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 relative">
-            {/* Highway background */}
+            {/* Highway background - not zoomed in */}
             <Image
               src="/highway.png"
               alt="Highway outside"
               fill
-              className="object-cover"
+              className="object-cover scale-100"
               priority
             />
             {/* Back button - attached to this section */}
