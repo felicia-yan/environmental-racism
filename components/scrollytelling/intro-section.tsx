@@ -140,17 +140,16 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 4: Article Content Begins */}
       {stage === "article" && (
         <div className="relative w-full">
-          {/* Back button - fixed in top left corner */}
-          <button
-            onClick={() => setStage("split")}
-            className="fixed top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
-            aria-label="Back to start"
-          >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
-
           {/* Door open reveal - the highway scene */}
-          <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50">
+          <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50 relative">
+            {/* Back button - attached to this section */}
+            <button
+              onClick={() => setStage("split")}
+              className="absolute top-4 left-4 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
+              aria-label="Back to start"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
             <div className="max-w-3xl text-center">
               <div className="mb-12 animate-in fade-in duration-500 delay-300">
                 <p className="text-lg md:text-xl font-medium text-foreground leading-relaxed">
