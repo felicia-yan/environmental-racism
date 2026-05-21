@@ -17,6 +17,7 @@ type Section = "intro" | "chapter1" | "chapter2" | "chapter3" | "conclusion";
 export default function EnvironmentalRacismPage() {
   const [currentSection, setCurrentSection] = useState<Section>("intro");
   const [started, setStarted] = useState(false);
+  const [introStage, setIntroStage] = useState<"split" | "zoom" | "door" | "article">("split");
 
   const introRevealRef = useRef<HTMLDivElement>(null);
   const chapter1Ref = useRef<HTMLDivElement>(null);
@@ -50,12 +51,12 @@ export default function EnvironmentalRacismPage() {
   return (
     <main className="scroll-smooth">
       {/* Intro Section */}
-      <IntroSection onStart={handleStart} />
+      <IntroSection onStart={handleStart} onStageChange={setIntroStage} />
 
       {/* Intro Reveal - Highway appears */}
       <div
         ref={introRevealRef}
-        className="min-h-screen bg-background flex flex-col items-center justify-center px-6"
+        className={`min-h-screen bg-background flex flex-col items-center justify-center px-6 ${introStage !== "article" ? "hidden" : ""}`}
       >
         <NarrativeSection className="max-w-2xl">
           <NarrativeText>
@@ -76,7 +77,7 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 1: Redlining */}
-      <div ref={chapter1Ref}>
+      <div ref={chapter1Ref} className={introStage !== "article" ? "hidden" : ""}>
         <ChapterHeader chapterNumber={1} title="Redlining" totalChapters={3} />
 
         <NarrativeSection>
@@ -209,7 +210,7 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 2: Sacrifice Zones */}
-      <div ref={chapter2Ref}>
+      <div ref={chapter2Ref} className={introStage !== "article" ? "hidden" : ""}>
         <ChapterHeader
           chapterNumber={2}
           title="Sacrifice Zones"
@@ -316,7 +317,7 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 3: Health Outcomes */}
-      <div ref={chapter3Ref}>
+      <div ref={chapter3Ref} className={introStage !== "article" ? "hidden" : ""}>
         <ChapterHeader
           chapterNumber={3}
           title="Health Outcomes"
@@ -364,7 +365,7 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Conclusion */}
-      <div ref={conclusionRef} className="min-h-screen bg-background">
+      <div ref={conclusionRef} className={`min-h-screen bg-background ${introStage !== "article" ? "hidden" : ""}`}>
         <NarrativeSection className="py-24">
           <NarrativeHighlight>Everything is connected.</NarrativeHighlight>
           <NarrativeText>
