@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 
 interface IntroSectionProps {
@@ -140,15 +140,14 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 4: Article Content Begins */}
       {stage === "article" && (
         <div className="relative w-full">
-          {/* Compact title bar - users can scroll back up to see the article title */}
-          <div className="w-full px-6 py-8 bg-[#FFF986]">
-            <div className="max-w-xl mx-auto text-center">
-              <h1 className="distressed-text text-2xl font-black text-red-500 leading-tight">
-                What is Environmental Racism?
-              </h1>
-              <p className="text-xs text-foreground/70 mt-2">by Felicia Yan</p>
-            </div>
-          </div>
+          {/* Back button - fixed in top left corner */}
+          <button
+            onClick={() => setStage("split")}
+            className="fixed top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
+            aria-label="Back to start"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
 
           {/* Door open reveal - the highway scene */}
           <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50">
