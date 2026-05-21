@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 
 interface IntroSectionProps {
@@ -13,21 +13,8 @@ export function IntroSection({ onStart }: IntroSectionProps) {
     "split"
   );
 
-  // Lock scroll when not in article stage
-  useEffect(() => {
-    if (stage !== "article") {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
-    }
 
-    return () => {
-      document.body.style.overflow = "auto";
-      document.documentElement.style.overflow = "auto";
-    };
-  }, [stage]);
+
 
   const handleStartClick = () => {
     setStage("zoom");
@@ -45,7 +32,6 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       className="relative w-full bg-[#FFF9B0]"
       style={{
         height: stage !== "article" ? "100vh" : "auto",
-        overflow: "hidden",
       }}
     >
       {/* Stage 1: Split Screen */}
@@ -153,12 +139,17 @@ export function IntroSection({ onStart }: IntroSectionProps) {
 
       {/* Stage 4: Article Content Begins */}
       {stage === "article" && (
-        <div
-          className="relative w-full bg-gradient-to-r from-green-50 via-[#F5F1E8] to-green-50"
-          style={{ overflow: "auto" }}
-        >
-          {/* Door open reveal - stays on screen */}
-          <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50">
+        <div className="relative w-full">
+          {/* Door open reveal - the highway scene */}
+          <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50 relative">
+            {/* Back button - attached to this section */}
+            <button
+              onClick={() => setStage("split")}
+              className="absolute top-4 left-4 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
+              aria-label="Back to start"
+            >
+              <ArrowLeft className="w-5 h-5 text-foreground" />
+            </button>
             <div className="max-w-3xl text-center">
               <div className="mb-12 animate-in fade-in duration-500 delay-300">
                 <p className="text-lg md:text-xl font-medium text-foreground leading-relaxed">
