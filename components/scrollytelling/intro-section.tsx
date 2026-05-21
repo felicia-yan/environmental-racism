@@ -138,10 +138,10 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
         </div>
       </div>
 
-      {/* Stage 3 & 4: Highway reveal - crossfades from door */}
+      {/* Stage 3: Highway reveal - crossfades from door, only during door stage */}
       <div 
         className={`fixed inset-0 w-full h-screen transition-all duration-1000 ease-in-out ${
-          stage === "door" || stage === "article"
+          stage === "door"
             ? "opacity-100 z-30" 
             : "opacity-0 z-0 pointer-events-none"
         }`}
