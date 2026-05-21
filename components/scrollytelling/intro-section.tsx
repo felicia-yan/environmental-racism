@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 
@@ -12,6 +12,22 @@ export function IntroSection({ onStart }: IntroSectionProps) {
   const [stage, setStage] = useState<"split" | "zoom" | "door" | "article">(
     "split"
   );
+
+  // Lock scroll only during the door animation to prevent accidental scrolling
+  useEffect(() => {
+    if (stage === "door") {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
+    };
+  }, [stage]);
 
 
 
@@ -140,10 +156,32 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       {/* Stage 4: Article Content Begins */}
       {stage === "article" && (
         <div
-          className="relative w-full bg-gradient-to-r from-green-50 via-[#F5F1E8] to-green-50"
+          className="relative w-full"
           style={{ overflow: "auto" }}
         >
-          {/* Door open reveal - stays on screen */}
+          {/* Title section - users can scroll back up to see this */}
+          <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 py-12 bg-[#FFF986]">
+            <div className="max-w-xl text-center">
+              <h1 className="distressed-text text-4xl md:text-5xl font-black text-red-500 leading-none mb-8">
+                What is
+                <br />
+                Environmental
+                <br />
+                Racism?
+              </h1>
+
+              <p className="text-sm md:text-base text-foreground mb-12 leading-relaxed">
+                a story about highways, red lines, <br></br>and social
+                determinants of health
+              </p>
+
+              <footer className="mt-8 flex flex-col items-center gap-2 text-sm">
+                <span className="font-medium">by Felicia Yan</span>
+              </footer>
+            </div>
+          </div>
+
+          {/* Door open reveal - the highway scene */}
           <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50">
             <div className="max-w-3xl text-center">
               <div className="mb-12 animate-in fade-in duration-500 delay-300">
