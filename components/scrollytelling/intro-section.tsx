@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 
@@ -12,6 +12,7 @@ export function IntroSection({ onStart }: IntroSectionProps) {
   const [stage, setStage] = useState<"split" | "zoom" | "door" | "article">(
     "split"
   );
+  const revealRef = useRef<HTMLDivElement>(null);
 
   // Lock scroll only during the door animation to prevent accidental scrolling
   useEffect(() => {
@@ -27,6 +28,16 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       document.body.style.overflow = "auto";
       document.documentElement.style.overflow = "auto";
     };
+  }, [stage]);
+
+  // Scroll to reveal section when transitioning to article
+  useEffect(() => {
+    if (stage === "article" && revealRef.current) {
+      // Small delay to ensure the content is rendered
+      setTimeout(() => {
+        revealRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
+      }, 50);
+    }
   }, [stage]);
 
 
@@ -47,7 +58,7 @@ export function IntroSection({ onStart }: IntroSectionProps) {
       className="relative w-full bg-[#FFF9B0]"
       style={{
         height: stage !== "article" ? "100vh" : "auto",
-        overflow: "hidden",
+        overflow: stage !== "article" ? "hidden" : "visible",
       }}
     >
       {/* Stage 1: Split Screen */}
@@ -155,14 +166,11 @@ export function IntroSection({ onStart }: IntroSectionProps) {
 
       {/* Stage 4: Article Content Begins */}
       {stage === "article" && (
-        <div
-          className="relative w-full"
-          style={{ overflow: "auto" }}
-        >
-          {/* Title section - users can scroll back up to see this */}
-          <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 py-12 bg-[#FFF986]">
+        <div className="relative w-full">
+          {/* Title section - compact, users can scroll back up to see this */}
+          <div className="w-full flex flex-col items-center justify-center px-6 py-16 bg-[#FFF986]">
             <div className="max-w-xl text-center">
-              <h1 className="distressed-text text-4xl md:text-5xl font-black text-red-500 leading-none mb-8">
+              <h1 className="distressed-text text-3xl md:text-4xl font-black text-red-500 leading-none mb-4">
                 What is
                 <br />
                 Environmental
@@ -170,19 +178,21 @@ export function IntroSection({ onStart }: IntroSectionProps) {
                 Racism?
               </h1>
 
-              <p className="text-sm md:text-base text-foreground mb-12 leading-relaxed">
-                a story about highways, red lines, <br></br>and social
-                determinants of health
+              <p className="text-xs md:text-sm text-foreground leading-relaxed">
+                a story about highways, red lines, and social determinants of health
               </p>
 
-              <footer className="mt-8 flex flex-col items-center gap-2 text-sm">
-                <span className="font-medium">by Felicia Yan</span>
+              <footer className="mt-4 text-xs text-foreground/70">
+                <span>by Felicia Yan</span>
               </footer>
             </div>
           </div>
 
           {/* Door open reveal - the highway scene */}
-          <div className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50">
+          <div 
+            ref={revealRef}
+            className="min-h-screen w-full flex items-center justify-center px-6 py-12 bg-gradient-to-b from-sky-300 to-green-50"
+          >
             <div className="max-w-3xl text-center">
               <div className="mb-12 animate-in fade-in duration-500 delay-300">
                 <p className="text-lg md:text-xl font-medium text-foreground leading-relaxed">
