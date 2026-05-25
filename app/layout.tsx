@@ -23,21 +23,20 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "What is Environmental Racism?",
   description:
-    "An explorable explanation about how maps, mortgages, and highways shaped who gets to live healthy",
+    "a story about highways, red lines, and social determinants of health",
   generator: "v0.app",
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
+        url: "/icon.png",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/icon-dark-32x32.png",
+        url: "/icon.png",
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/icon.svg",
-        type: "image/svg+xml",
+        url: "/icon.png",
       },
     ],
     apple: "/apple-icon.png",

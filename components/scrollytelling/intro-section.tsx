@@ -41,7 +41,7 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
       {stage === "split" && (
         <div className="flex h-screen">
           {/* Left half - Title and decoration */}
-          <div className="w-1/2 flex flex-col items-center justify-center px-8 py-32 bg-[#FFF986]">
+          <div className="w-1/2 flex flex-col items-center justify-center px-8 py-32 bg-[#FFF764]">
             <div className="max-w-xl text-center">
               <h1 className="distressed-text text-4xl md:text-5xl font-black text-red-500 leading-none mb-8">
                 What is
@@ -72,13 +72,13 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
               </button>
 
               <footer className="mt-16 flex flex-col items-center gap-2 text-sm">
-                <span className="font-medium">by Felicia Yan</span>
-                <a
+                <span className="font-medium text-base">by Felicia Yan</span>
+                {/* <a
                   href="#about"
                   className="text-secondary underline hover:text-secondary/80"
                 >
                   About
-                </a>
+                </a> */}
               </footer>
             </div>
           </div>
@@ -176,7 +176,9 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
               </div>
 
               <div className="mt-16 animate-in fade-in duration-500 delay-700 text-foreground/60 text-xs">
-                <p className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full inline-block">Scroll to continue</p>
+                <p className="bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full inline-block">
+                  Scroll to continue
+                </p>
               </div>
             </div>
           </div>
