@@ -1,11 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ReactNode,
+  type RefObject,
+} from "react"
 import { Check, X, HelpCircle } from "lucide-react"
 import Image from "next/image"
 
 type RiskLevel = "hazardous" | "declining" | "still-desirable" | "best"
-type CharacterType = "green" | "yellow"
+/** Blue applicants target green-roof houses; yellow target red-roof houses */
+type CharacterType = "blue" | "yellow"
 
 interface Applicant {
   id: number
@@ -13,24 +21,36 @@ interface Applicant {
   mortgage: number
   riskLevel: RiskLevel
   characterType: CharacterType
-  assignedHouse?: number
+  targetHouse: number
 }
 
-interface HousePosition {
+interface HouseSlot {
   houseNumber: number
-  x: number
-  y: number
+  /** 0–1 position on the map, aligned to baked-in houses on bg-neighborhood.png */
+  anchorX: number
+  anchorY: number
   occupied: boolean
   characterType?: CharacterType
-  isWalking?: boolean
 }
 
-interface MortgageCardProps {
+const REDLINING_BG = "#B3DA9B"
+const PLACED_CHARACTER_SCALE = 0.65
+const CHARACTER_FOOT_TRANSFORM = "translate(-50%, -92%)"
+/** Feet on the road at the bottom of the neighborhood map */
+const BOTTOM_START = { x: 0.51, y: 1.0 }
+const ROAD_BOTTOM_OFFSET = "7%"
+const ROAD_CHARACTER_LEFT = "51.5%"
+const WALK_FRAME_MS = 200
+const MAX_DISCRETIONARY_DENIES = 1
+const WALK_STEPS = 45
+const WALK_STEP_MS = 35
+
+interface DecisionControlsProps {
   applicant: Applicant
   onApprove: () => void
   onDeny: () => void
-  approvalsDisabled: boolean
-  denialTooltip?: string
+  denialMessage: string
+  disabled: boolean
 }
 
 function getRiskStyles(risk: RiskLevel) {
@@ -38,9 +58,9 @@ function getRiskStyles(risk: RiskLevel) {
     case "hazardous":
       return { text: "text-red-600", bg: "bg-red-600", label: "hazardous" }
     case "declining":
-      return { text: "text-orange-500", bg: "bg-orange-500", label: "declining" }
+      return { text: "text-yellow-600", bg: "bg-yellow-600", label: "declining" }
     case "still-desirable":
-      return { text: "text-yellow-600", bg: "bg-yellow-600", label: "still desirable" }
+      return { text: "text-blue-600", bg: "bg-blue-600", label: "still desirable" }
     case "best":
       return { text: "text-green-600", bg: "bg-green-600", label: "best" }
   }
@@ -50,103 +70,350 @@ function canApprove(risk: RiskLevel): boolean {
   return risk === "best" || risk === "still-desirable"
 }
 
-function MortgageCard({ applicant, onApprove, onDeny, approvalsDisabled, denialTooltip }: MortgageCardProps) {
+function getRiskBarWidth(risk: RiskLevel): string {
+  switch (risk) {
+    case "hazardous":
+      return "100%"
+    case "declining":
+      return "66%"
+    case "still-desirable":
+      return "33%"
+    default:
+      return "15%"
+  }
+}
+
+function getCharacterSprite(characterType: CharacterType, isWalking: boolean): string {
+  if (characterType === "yellow") {
+    return isWalking ? "/redlining/yellow walking.png" : "/redlining/yellow idle.png"
+  }
+  return isWalking ? "/redlining/blue walking.png" : "/redlining/blue idle.png"
+}
+
+const NEIGHBORHOOD_BG_CLASS = "object-cover object-bottom"
+
+function DecisionControls({
+  applicant,
+  onApprove,
+  onDeny,
+  denialMessage,
+  disabled,
+}: DecisionControlsProps) {
   const riskStyles = getRiskStyles(applicant.riskLevel)
   const isApprovable = canApprove(applicant.riskLevel)
-  
-  return (
-    <div className="speech-bubble p-6 max-w-xs">
-      <p className="text-sm text-center text-foreground/70 mb-2 font-semibold">{applicant.name}</p>
-      <p className="text-sm text-center text-foreground/70 mb-4">I want this one!</p>
-      
-      {/* Mortgage Amount */}
-      <p className="text-sm text-center text-foreground/70">Requested</p>
-      <p className="text-4xl font-bold text-center text-foreground mb-6">
-        ${applicant.mortgage.toLocaleString()}
-      </p>
-      
-      {/* Risk Level */}
-      <div className="flex items-center justify-center gap-1 mb-2">
-        <p className="text-sm text-foreground/70">Risk Level</p>
-        <HelpCircle className="w-4 h-4 text-foreground/50" />
-      </div>
-      <p className={`distressed-text text-xl text-center ${riskStyles.text} mb-2`}>
-        {riskStyles.label}
-      </p>
-      <div className="w-full h-3 bg-muted rounded-full overflow-hidden mb-4">
-        <div 
-          className={`h-full ${riskStyles.bg}`}
-          style={{ 
-            width: applicant.riskLevel === 'hazardous' ? '100%' :
-                   applicant.riskLevel === 'declining' ? '66%' :
-                   applicant.riskLevel === 'still-desirable' ? '33%' : '15%'
-          }}
-        />
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 justify-center">
-        <button
-          onClick={onApprove}
-          disabled={!isApprovable}
-          title={!isApprovable ? (denialTooltip || "This loan is too hazardous, your company does not allow you to approve") : ""}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-foreground font-bold rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors"
+  const approveDisabled = !isApprovable || disabled
+  const showDenialTooltip = !isApprovable && Boolean(denialMessage)
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full max-w-lg mx-auto">
+      <div className="flex gap-4 justify-center">
+        <div
+          className={`relative group ${showDenialTooltip ? "cursor-not-allowed" : ""}`}
         >
-          <Check className="w-5 h-5" strokeWidth={3} />
-          approve
-        </button>
+          {showDenialTooltip && (
+            <div
+              id="approve-denial-tooltip"
+              role="tooltip"
+              className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+0.5rem)] w-64 px-3 py-2.5 text-sm text-foreground font-medium leading-snug text-center bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-foreground/15 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-opacity z-50 pointer-events-none"
+            >
+              {denialMessage}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={onApprove}
+            disabled={approveDisabled}
+            aria-describedby={showDenialTooltip ? "approve-denial-tooltip" : undefined}
+            className={`flex items-center gap-2 px-8 py-3 bg-white text-foreground font-bold rounded-full border-2 border-foreground shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors ${
+              showDenialTooltip ? "pointer-events-none" : ""
+            }`}
+          >
+            <Check className="w-5 h-5" strokeWidth={3} />
+            approve
+          </button>
+        </div>
         <button
+          type="button"
           onClick={onDeny}
-          className="flex items-center gap-2 px-4 py-2 bg-white text-foreground font-bold rounded-lg hover:bg-gray-100 transition-colors"
+          disabled={disabled}
+          className="flex items-center gap-2 px-8 py-3 bg-white text-foreground font-bold rounded-full border-2 border-foreground shadow-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <X className="w-5 h-5" strokeWidth={3} />
           deny
+        </button>
+      </div>
+
+      <div className="w-full max-w-xs text-center">
+        <div className="flex items-center justify-center gap-1 mb-1">
+          <p className="text-sm text-foreground/80 font-medium">Risk Level</p>
+          <HelpCircle className="w-4 h-4 text-foreground/50" aria-hidden />
+        </div>
+        <p className={`distressed-text text-2xl ${riskStyles.text} mb-2`}>
+          {riskStyles.label}
+        </p>
+        <div className="w-full h-3 bg-white/60 rounded-full overflow-hidden">
+          <div
+            className={`h-full ${riskStyles.bg} transition-all`}
+            style={{ width: getRiskBarWidth(applicant.riskLevel) }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SpeechBubble({ applicant }: { applicant: Applicant }) {
+  return (
+    <div
+      className="relative flex flex-col items-center text-center min-w-[320px] min-h-[270px] px-14 pt-11 pb-16 scale-110"
+      style={{
+        backgroundImage: "url(/redlining/bubble.png)",
+        backgroundSize: "100% 100%",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
+      }}
+    >
+      <p className="text-sm text-foreground/80 mb-2 mt-1">I want this one!</p>
+      <p className="text-2xl font-bold text-foreground mb-4">
+        ${applicant.mortgage.toLocaleString()}
+      </p>
+      <div className="mt-auto pb-2">
+        <Image
+          src={`/redlining/house-${applicant.targetHouse}.png`}
+          alt=""
+          width={80}
+          height={70}
+          className="opacity-95"
+          aria-hidden
+        />
+      </div>
+    </div>
+  )
+}
+
+/** Matches floating copy blocks on the highway intro scene */
+const FLOATING_HEADER_CLASS =
+  "text-lg md:text-xl font-medium text-foreground leading-relaxed bg-white/80 backdrop-blur-sm px-6 py-4 rounded-lg shadow-sm"
+
+function ResultsTicker({
+  approved,
+  denied,
+  onTryAgain,
+}: {
+  approved: number
+  denied: number
+  onTryAgain: () => void
+}) {
+  return (
+    <div className="absolute top-4 left-0 right-0 z-40 flex flex-col items-center gap-3 px-6 pointer-events-none">
+      <div className="flex flex-wrap items-center justify-center gap-3 pointer-events-auto">
+        <p className={`${FLOATING_HEADER_CLASS} tabular-nums`}>
+          Approved: <span className="font-bold">{approved}</span>
+        </p>
+        <p className={`${FLOATING_HEADER_CLASS} tabular-nums`}>
+          Denied: <span className="font-bold">{denied}</span>
+        </p>
+      </div>
+      <p className={`${FLOATING_HEADER_CLASS} text-center max-w-xl`}>
+        Hmm, where&apos;d all the squares go?
+      </p>
+      <button
+        type="button"
+        onClick={onTryAgain}
+        className="pointer-events-auto text-sm font-medium text-foreground bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm hover:bg-white transition-colors"
+      >
+        Try again
+      </button>
+    </div>
+  )
+}
+
+function GameplayHeaderOverlay({
+  applicant,
+  onApprove,
+  onDeny,
+  denialMessage,
+  controlsDisabled,
+}: {
+  applicant: Applicant
+  onApprove: () => void
+  onDeny: () => void
+  denialMessage: string
+  controlsDisabled: boolean
+}) {
+  return (
+    <div className="absolute top-0 left-0 right-0 z-30 px-6 pt-6 pb-4 pointer-events-none lg:min-h-[200px]">
+      <div className="max-w-[280px] text-foreground mb-6 lg:mb-0 lg:absolute lg:left-6 lg:top-6 pointer-events-auto bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+        <p className="text-sm">
+          For each applicant, decide whether to approve or deny their mortgage application. The
+          goal is to approve as many as you can!
+        </p>
+      </div>
+      <div className="w-full flex justify-center lg:absolute lg:left-1/2 lg:top-6 lg:-translate-x-1/2 lg:w-max lg:max-w-none pointer-events-auto">
+        <DecisionControls
+          applicant={applicant}
+          onApprove={onApprove}
+          onDeny={onDeny}
+          denialMessage={denialMessage}
+          disabled={controlsDisabled}
+        />
+      </div>
+    </div>
+  )
+}
+
+function NeighborhoodScene({
+  mapRef,
+  children,
+}: {
+  mapRef: RefObject<HTMLDivElement | null>
+  children: ReactNode
+}) {
+  return (
+    <div
+      ref={mapRef}
+      className="relative flex-1 min-h-[95vh] w-full"
+      style={{ backgroundColor: REDLINING_BG }}
+    >
+      <div className="absolute inset-0">
+        <Image
+          src="/redlining/bg-neighborhood.png"
+          alt=""
+          fill
+          className={NEIGHBORHOOD_BG_CLASS}
+          priority
+        />
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function ApplicantProgress({
+  currentIndex,
+  total,
+}: {
+  currentIndex: number
+  total: number
+}) {
+  return (
+    <div className="absolute top-4 right-4 z-40 px-4 py-3 rounded-lg bg-black/40 backdrop-blur-sm text-right pointer-events-none">
+      <div className="flex gap-1.5 justify-end mb-1.5">
+        {Array.from({ length: total }).map((_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full ${i < currentIndex ? "bg-cream" : "bg-white/30"}`}
+          />
+        ))}
+      </div>
+      <p className="text-cream text-sm whitespace-nowrap">
+        Applicant {currentIndex + 1} of {total}
+      </p>
+    </div>
+  )
+}
+
+function countDiscretionaryDenies(
+  decisions: Array<"approved" | "denied">,
+  applicantList: Applicant[]
+): number {
+  return decisions.reduce((count, decision, index) => {
+    if (decision === "denied" && canApprove(applicantList[index]?.riskLevel)) {
+      return count + 1
+    }
+    return count
+  }, 0)
+}
+
+function ExcessiveDenyOverlay({ onTryAgain }: { onTryAgain: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-6">
+      <div className="bg-cream-dark rounded-xl p-8 max-w-md text-center border-4 border-tan shadow-xl">
+        <h3 className="text-2xl font-bold mb-4 text-red-600">Approve more mortgages</h3>
+        <p className="text-sm mb-6 leading-relaxed">
+          You can only deny one application you were allowed to approve. Try again and approve
+          more mortgages to fill the neighborhood.
+        </p>
+        <button
+          type="button"
+          onClick={onTryAgain}
+          className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 font-bold"
+        >
+          Try Again
         </button>
       </div>
     </div>
   )
 }
 
-interface CharacterPositionProps {
-  x: number
-  y: number
-  isWalking: boolean
-  characterType: CharacterType
+function shuffleApplicants(applicants: Applicant[]): Applicant[] {
+  const shuffled = [...applicants]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
 }
 
-function Character({ x, y, isWalking, characterType }: CharacterPositionProps) {
-  const [frameIndex, setFrameIndex] = useState(0)
-  
+function BottomApplicantScene({ applicant }: { applicant: Applicant }) {
+  return (
+    <div
+      key={applicant.id}
+      className="absolute z-20 -translate-x-1/2 pointer-events-none"
+      style={{ bottom: ROAD_BOTTOM_OFFSET, left: ROAD_CHARACTER_LEFT }}
+    >
+      <div className="redlining-pop-in flex flex-col items-center">
+        <div className="mb-5">
+          <SpeechBubble applicant={applicant} />
+        </div>
+        <div className="relative flex flex-col items-center">
+          <p className="text-xs font-bold bg-foreground text-white px-2 py-0.5 rounded mb-0.5">
+            {applicant.name}
+          </p>
+          <CharacterSprite characterType={applicant.characterType} isWalking={false} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CharacterSprite({
+  characterType,
+  isWalking,
+  scale = 1,
+  width = 64,
+  height = 84,
+}: {
+  characterType: CharacterType
+  isWalking: boolean
+  scale?: number
+  width?: number
+  height?: number
+}) {
+  const [useWalkPose, setUseWalkPose] = useState(false)
+
   useEffect(() => {
     if (!isWalking) {
-      setFrameIndex(0)
+      setUseWalkPose(false)
       return
     }
-    
     const interval = setInterval(() => {
-      setFrameIndex(prev => (prev + 1) % 2)
-    }, 300)
-    
+      setUseWalkPose((prev) => !prev)
+    }, WALK_FRAME_MS)
     return () => clearInterval(interval)
   }, [isWalking])
-  
-  const imagePath = isWalking 
-    ? `/redlining/${characterType} walking ${frameIndex + 1}.png`
-    : `/redlining/${characterType} idle ${frameIndex + 1}.png`
-  
+
   return (
-    <div 
-      className="absolute transition-all duration-500 ease-in-out"
-      style={{ left: `${x}px`, top: `${y}px` }}
-    >
-      <Image
-        src={imagePath}
-        alt="character"
-        width={60}
-        height={80}
-        priority
-      />
-    </div>
+    <Image
+      src={getCharacterSprite(characterType, isWalking && useWalkPose)}
+      alt=""
+      width={width}
+      height={height}
+      priority
+      className="drop-shadow-sm origin-bottom"
+      style={{ transform: `scale(${scale})` }}
+    />
   )
 }
 
@@ -154,288 +421,307 @@ interface RedliningSimulationProps {
   onComplete?: (results: { approved: number; denied: number }) => void
 }
 
-const APPLICANTS: Applicant[] = [
-  { id: 1, name: "Marcus", mortgage: 20100, riskLevel: "best", characterType: "green" },
-  { id: 2, name: "David", mortgage: 18500, riskLevel: "declining", characterType: "yellow" },
-  { id: 3, name: "Sarah", mortgage: 25000, riskLevel: "still-desirable", characterType: "green" },
-  { id: 4, name: "James", mortgage: 32000, riskLevel: "hazardous", characterType: "yellow" },
-  { id: 5, name: "Elena", mortgage: 15800, riskLevel: "best", characterType: "green" },
-  { id: 6, name: "Robert", mortgage: 22300, riskLevel: "declining", characterType: "yellow" },
-  { id: 7, name: "Lisa", mortgage: 28900, riskLevel: "still-desirable", characterType: "green" },
-  { id: 8, name: "Michael", mortgage: 19200, riskLevel: "hazardous", characterType: "yellow" },
-  { id: 9, name: "Jennifer", mortgage: 21500, riskLevel: "best", characterType: "green" },
-  { id: 10, name: "Christopher", mortgage: 17600, riskLevel: "declining", characterType: "yellow" },
-  { id: 11, name: "Amanda", mortgage: 24100, riskLevel: "still-desirable", characterType: "green" },
-  { id: 12, name: "Daniel", mortgage: 31200, riskLevel: "hazardous", characterType: "yellow" },
-  { id: 13, name: "Victoria", mortgage: 23400, riskLevel: "best", characterType: "green" },
-  { id: 14, name: "Kevin", mortgage: 19900, riskLevel: "declining", characterType: "yellow" },
-  { id: 15, name: "Patricia", mortgage: 26700, riskLevel: "still-desirable", characterType: "green" },
+const BASE_APPLICANTS: Applicant[] = [
+  { id: 1, name: "David", mortgage: 18500, riskLevel: "declining", characterType: "yellow", targetHouse: 1 },
+  { id: 2, name: "James", mortgage: 32000, riskLevel: "hazardous", characterType: "yellow", targetHouse: 2 },
+  { id: 3, name: "Robert", mortgage: 22300, riskLevel: "declining", characterType: "yellow", targetHouse: 3 },
+  { id: 4, name: "Michael", mortgage: 19200, riskLevel: "hazardous", characterType: "yellow", targetHouse: 4 },
+  { id: 5, name: "Kevin", mortgage: 19900, riskLevel: "declining", characterType: "yellow", targetHouse: 5 },
+  { id: 6, name: "Sasha", mortgage: 20100, riskLevel: "best", characterType: "blue", targetHouse: 6 },
+  { id: 7, name: "Alice", mortgage: 25000, riskLevel: "still-desirable", characterType: "blue", targetHouse: 7 },
+  { id: 8, name: "Elena", mortgage: 15800, riskLevel: "best", characterType: "blue", targetHouse: 8 },
+  { id: 9, name: "Felicia", mortgage: 28900, riskLevel: "still-desirable", characterType: "blue", targetHouse: 9 },
+  { id: 10, name: "Jennifer", mortgage: 21500, riskLevel: "best", characterType: "blue", targetHouse: 10 },
 ]
 
-// House positions - left side (1-5) hazardous, right side (6-10) green
-const HOUSE_POSITIONS: HousePosition[] = [
-  { houseNumber: 1, x: 60, y: 280, occupied: false },
-  { houseNumber: 2, x: 200, y: 240, occupied: false },
-  { houseNumber: 3, x: 350, y: 300, occupied: false },
-  { houseNumber: 4, x: 480, y: 200, occupied: false },
-  { houseNumber: 5, x: 150, y: 400, occupied: false },
-  { houseNumber: 6, x: 800, y: 280, occupied: false },
-  { houseNumber: 7, x: 950, y: 200, occupied: false },
-  { houseNumber: 8, x: 1100, y: 320, occupied: false },
-  { houseNumber: 9, x: 1220, y: 240, occupied: false },
-  { houseNumber: 10, x: 1350, y: 340, occupied: false },
+const HOUSE_SLOTS: HouseSlot[] = [
+  { houseNumber: 1, anchorX: 0.11, anchorY: 0.68, occupied: false },
+  { houseNumber: 2, anchorX: 0.21, anchorY: 0.62, occupied: false },
+  { houseNumber: 3, anchorX: 0.31, anchorY: 0.72, occupied: false },
+  { houseNumber: 4, anchorX: 0.4, anchorY: 0.58, occupied: false },
+  { houseNumber: 5, anchorX: 0.17, anchorY: 0.80, occupied: false },
+  { houseNumber: 6, anchorX: 0.61, anchorY: 0.74, occupied: false },
+  { houseNumber: 7, anchorX: 0.67, anchorY: 0.61, occupied: false },
+  { houseNumber: 8, anchorX: 0.82, anchorY: 0.55, occupied: false },
+  { houseNumber: 9, anchorX: 0.72, anchorY: 0.90, occupied: false },
+  { houseNumber: 10, anchorX: 0.94, anchorY: 0.85, occupied: false },
 ]
 
-export function RedliningSimulation({ onComplete }: RedliningSimulationProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [decisions, setDecisions] = useState<Array<'approved' | 'denied'>>([])
-  const [houses, setHouses] = useState<HousePosition[]>(HOUSE_POSITIONS)
-  const [characterPosition, setCharacterPosition] = useState({ x: 550, y: 420 })
-  const [isWalking, setIsWalking] = useState(false)
-  const [targetHouse, setTargetHouse] = useState<HousePosition | null>(null)
-  
-  const currentApplicant = APPLICANTS[currentIndex]
-  const isComplete = currentIndex >= APPLICANTS.length
-  
-  // Get next available house for the character type
-  const getNextAvailableHouse = (characterType: CharacterType): HousePosition | null => {
-    const availableHouses = characterType === 'green' 
-      ? houses.filter(h => h.houseNumber >= 6 && !h.occupied)
-      : houses.filter(h => h.houseNumber < 6 && !h.occupied)
-    return availableHouses.length > 0 ? availableHouses[0] : null
-  }
-  
-  // Animation for character walking to house
-  useEffect(() => {
-    if (!isWalking || !targetHouse) return
-    
-    const startX = characterPosition.x
-    const startY = characterPosition.y
-    const endX = targetHouse.x + 40
-    const endY = targetHouse.y - 80
-    
-    const steps = 30
-    let currentStep = 0
-    
-    const interval = setInterval(() => {
-      currentStep++
-      const progress = currentStep / steps
-      
-      const newX = startX + (endX - startX) * progress
-      const newY = startY + (endY - startY) * progress
-      
-      setCharacterPosition({ x: newX, y: newY })
-      
-      if (currentStep >= steps) {
-        setIsWalking(false)
-        clearInterval(interval)
-      }
-    }, 30)
-    
-    return () => clearInterval(interval)
-  }, [isWalking, targetHouse, characterPosition.x, characterPosition.y])
-  
-  const handleDecision = (decision: 'approved' | 'denied') => {
-    if (decision === 'approved') {
-      const nextHouse = getNextAvailableHouse(currentApplicant.characterType)
-      if (nextHouse) {
-        setTargetHouse(nextHouse)
-        setIsWalking(true)
-        setHouses(houses.map(h => 
-          h.houseNumber === nextHouse.houseNumber 
-            ? { ...h, occupied: true, characterType: currentApplicant.characterType }
-            : h
-        ))
-      }
-    }
-    
-    const newDecisions = [...decisions, decision]
-    setDecisions(newDecisions)
-    
-    if (currentIndex + 1 >= APPLICANTS.length) {
-      setTimeout(() => {
-        onComplete?.({ 
-          approved: newDecisions.filter(d => d === 'approved').length,
-          denied: newDecisions.filter(d => d === 'denied').length 
-        })
-      }, 1200)
-    }
-    
-    setTimeout(() => {
-      setCurrentIndex(prev => prev + 1)
-    }, 800)
-  }
-  
-  if (isComplete) {
-    const approved = decisions.filter(d => d === 'approved').length
-    const denied = decisions.filter(d => d === 'denied').length
-    const greenHousesOccupied = houses.filter(h => h.houseNumber >= 6 && h.occupied).length
-    const redHousesEmpty = houses.filter(h => h.houseNumber < 6 && !h.occupied).length
-    
-    return (
-      <div className="grass-bg min-h-[70vh] flex flex-col items-center justify-center p-8 relative overflow-hidden">
-        {/* Background Scene */}
-        <div className="absolute inset-0">
-          <Image
-            src="/redlining/bg-neighborhood.png"
-            alt="neighborhood"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
-        
-        {/* Houses at end state */}
-        <div className="absolute inset-0">
-          {houses.map(house => (
-            <div 
-              key={house.houseNumber}
-              className="absolute"
-              style={{ left: `${(house.x / 1400) * 100}%`, top: `${(house.y / 500) * 100}%` }}
-            >
-              <Image
-                src={`/redlining/house-${house.houseNumber}.png`}
-                alt={`house-${house.houseNumber}`}
-                width={80}
-                height={70}
-              />
-              {house.occupied && (
-                <Character
-                  x={0}
-                  y={-60}
-                  isWalking={false}
-                  characterType={house.characterType!}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        {/* End screen content */}
-        <div className="relative z-10 bg-cream-dark rounded-xl p-8 max-w-2xl text-center border-4 border-tan shadow-xl">
-          <h3 className="text-3xl font-bold mb-6 text-red-600">Review Complete</h3>
-          
-          <p className="text-lg mb-4">
-            You approved <span className="text-green-600 font-bold text-xl">{approved}</span> applications
-          </p>
-          <p className="text-lg mb-8">
-            You denied <span className="text-red-600 font-bold text-xl">{denied}</span> applications
-          </p>
-          
-          <div className="bg-white p-6 rounded-lg mb-8 text-left">
-            <h4 className="font-bold text-lg mb-3">What happened:</h4>
-            <p className="text-sm mb-2">
-              ✓ Green neighborhood (right): <span className="font-bold">{greenHousesOccupied} houses</span> occupied
-            </p>
-            <p className="text-sm mb-4">
-              ✗ Red neighborhood (left): <span className="font-bold">{redHousesEmpty} houses</span> remain empty
-            </p>
-            <p className="text-sm text-foreground/70 italic">
-              This is how redlining worked in America. Discriminatory lending practices created segregated neighborhoods by race, with investment flowing to white neighborhoods while disinvesting in communities of color.
-            </p>
-          </div>
-          
-          <button 
-            onClick={() => { 
-              setCurrentIndex(0)
-              setDecisions([])
-              setHouses(HOUSE_POSITIONS)
-              setCharacterPosition({ x: 550, y: 420 })
-              setTargetHouse(null)
-            }}
-            className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 font-bold"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
-  
+/** All 10 applicants in a row — shown before the simulation starts */
+export function RedliningApplicantLineup() {
   return (
-    <div className="grass-bg min-h-[70vh] flex flex-col relative overflow-hidden">
-      {/* Background Scene */}
-      <div className="absolute inset-0">
-        <Image
-          src="/redlining/bg-neighborhood.png"
-          alt="neighborhood"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-      
-      {/* Houses */}
-      <div className="absolute inset-0">
-        {houses.map(house => (
-          <div 
-            key={house.houseNumber}
-            className="absolute"
-            style={{ left: `${(house.x / 1400) * 100}%`, top: `${(house.y / 500) * 100}%` }}
-          >
-            <Image
-              src={`/redlining/house-${house.houseNumber}.png`}
-              alt={`house-${house.houseNumber}`}
-              width={80}
-              height={70}
-              priority
-            />
-            {house.occupied && (
-              <Character
-                x={0}
-                y={-60}
-                isWalking={false}
-                characterType={house.characterType!}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-      
-      {/* Moving Character */}
-      <div className="absolute inset-0 pointer-events-none">
-        <Character
-          x={characterPosition.x}
-          y={characterPosition.y}
-          isWalking={isWalking}
-          characterType={currentApplicant.characterType}
-        />
-      </div>
-      
-      {/* UI Layer */}
-      <div className="relative z-10 flex-1 flex items-center justify-between p-8">
-        {/* Instructions */}
-        <div className="text-cream max-w-sm">
-          <p className="text-lg font-bold mb-2">Chapter 1: Redlining</p>
-          <p className="text-sm">For each applicant, decide whether to approve or deny their mortgage application.</p>
-        </div>
-        
-        {/* Mortgage Card */}
-        <div className="flex-shrink-0">
-          <MortgageCard 
-            applicant={currentApplicant}
-            onApprove={() => handleDecision('approved')}
-            onDeny={() => handleDecision('denied')}
-            approvalsDisabled={!canApprove(currentApplicant.riskLevel)}
-            denialTooltip="This loan is too hazardous, your company does not allow you to approve"
+    <div className="w-full overflow-x-auto py-8">
+      <div className="flex justify-center items-end gap-2 sm:gap-4 px-6 w-max mx-auto">
+      {BASE_APPLICANTS.map((applicant) => (
+        <div key={applicant.id} className="shrink-0 flex flex-col items-center">
+          <Image
+            src={getCharacterSprite(applicant.characterType, false)}
+            alt=""
+            width={44}
+            height={58}
+            className="drop-shadow-sm origin-bottom"
           />
         </div>
-      </div>
-      
-      {/* Progress indicator */}
-      <div className="relative z-10 bg-grass-dark/80 px-8 py-4 text-center">
-        <div className="flex gap-2 justify-center mb-2">
-          {Array.from({ length: 15 }).map((_, i) => (
-            <div 
-              key={i}
-              className={`w-2 h-2 rounded-full ${
-                i < currentIndex ? 'bg-cream' : 'bg-muted'
-              }`}
-            />
-          ))}
-        </div>
-        <p className="text-cream text-sm">Applicant {currentIndex + 1} of 15</p>
+      ))}
       </div>
     </div>
+  )
+}
+
+function getDenialMessage(risk: RiskLevel): string {
+    return "This loan is too hazardous. Your company does not allow you to approve."
+}
+
+function getHouseAnchor(house: HouseSlot) {
+  return { x: house.anchorX, y: house.anchorY }
+}
+
+function PlacedCharacter({
+  anchorX,
+  anchorY,
+  characterType,
+}: {
+  anchorX: number
+  anchorY: number
+  characterType: CharacterType
+}) {
+  return (
+    <div
+      className="absolute z-[18] pointer-events-none"
+      style={{
+        left: `${anchorX * 100}%`,
+        top: `${anchorY * 100}%`,
+        transform: CHARACTER_FOOT_TRANSFORM,
+      }}
+    >
+      <CharacterSprite
+        characterType={characterType}
+        isWalking={false}
+        scale={PLACED_CHARACTER_SCALE}
+        width={52}
+        height={68}
+      />
+    </div>
+  )
+}
+
+function OccupiedCharacters({ houses }: { houses: HouseSlot[] }) {
+  return (
+    <>
+      {houses
+        .filter((h) => h.occupied && h.characterType)
+        .map((house) => (
+          <PlacedCharacter
+            key={house.houseNumber}
+            anchorX={house.anchorX}
+            anchorY={house.anchorY}
+            characterType={house.characterType!}
+          />
+        ))}
+    </>
+  )
+}
+
+export function RedliningSimulation({ onComplete }: RedliningSimulationProps) {
+  const [applicants, setApplicants] = useState(() => shuffleApplicants(BASE_APPLICANTS))
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [decisions, setDecisions] = useState<Array<"approved" | "denied">>([])
+  const [houses, setHouses] = useState<HouseSlot[]>(HOUSE_SLOTS)
+  const [characterPosition, setCharacterPosition] = useState(BOTTOM_START)
+  const [characterScale, setCharacterScale] = useState(1)
+  const [isWalking, setIsWalking] = useState(false)
+  const [showWalkingCharacter, setShowWalkingCharacter] = useState(false)
+  const [walkerType, setWalkerType] = useState<CharacterType | null>(null)
+  const [controlsLocked, setControlsLocked] = useState(false)
+  const [showExcessiveDeny, setShowExcessiveDeny] = useState(false)
+  const mapRef = useRef<HTMLDivElement>(null)
+  const walkTargetRef = useRef<HouseSlot | null>(null)
+  const walkingApplicantRef = useRef<Applicant | null>(null)
+  const pendingDecisionsRef = useRef<Array<"approved" | "denied">>([])
+
+  const currentApplicant = applicants[currentIndex]
+  const isComplete = currentIndex >= applicants.length
+
+  const advanceApplicant = useCallback(
+    (newDecisions: Array<"approved" | "denied">) => {
+      setControlsLocked(false)
+      setShowWalkingCharacter(false)
+      setWalkerType(null)
+      setIsWalking(false)
+      setCharacterPosition(BOTTOM_START)
+      setCharacterScale(1)
+      walkTargetRef.current = null
+      walkingApplicantRef.current = null
+
+      setCurrentIndex((prev) => {
+        const next = prev + 1
+        if (next >= applicants.length) {
+          onComplete?.({
+            approved: newDecisions.filter((d) => d === "approved").length,
+            denied: newDecisions.filter((d) => d === "denied").length,
+          })
+        }
+        return next
+      })
+    },
+    [onComplete, applicants.length]
+  )
+
+  useEffect(() => {
+    if (!isWalking || !walkTargetRef.current) return
+
+    const target = walkTargetRef.current
+    const end = getHouseAnchor(target)
+    const walker = walkingApplicantRef.current
+    let step = 0
+
+    const interval = setInterval(() => {
+      step++
+      const progress = Math.min(step / WALK_STEPS, 1)
+
+      setCharacterPosition({
+        x: BOTTOM_START.x + (end.x - BOTTOM_START.x) * progress,
+        y: BOTTOM_START.y + (end.y - BOTTOM_START.y) * progress,
+      })
+      setCharacterScale(1 - progress * (1 - PLACED_CHARACTER_SCALE))
+
+      if (step >= WALK_STEPS) {
+        clearInterval(interval)
+        setIsWalking(false)
+        setCharacterPosition(end)
+        setCharacterScale(PLACED_CHARACTER_SCALE)
+
+        if (target && walker) {
+          setHouses((prev) =>
+            prev.map((h) =>
+              h.houseNumber === target.houseNumber
+                ? { ...h, occupied: true, characterType: walker.characterType }
+                : h
+            )
+          )
+        }
+
+        window.setTimeout(() => {
+          setShowWalkingCharacter(false)
+          setWalkerType(null)
+          walkTargetRef.current = null
+          walkingApplicantRef.current = null
+          advanceApplicant(pendingDecisionsRef.current)
+        }, 450)
+      }
+    }, WALK_STEP_MS)
+
+    return () => clearInterval(interval)
+  }, [isWalking, advanceApplicant])
+
+  const resetSimulation = useCallback(() => {
+    setApplicants(shuffleApplicants(BASE_APPLICANTS))
+    setCurrentIndex(0)
+    setDecisions([])
+    setHouses(HOUSE_SLOTS)
+    setCharacterPosition(BOTTOM_START)
+    setCharacterScale(1)
+    setShowWalkingCharacter(false)
+    setWalkerType(null)
+    setIsWalking(false)
+    setControlsLocked(false)
+    setShowExcessiveDeny(false)
+    walkTargetRef.current = null
+    walkingApplicantRef.current = null
+    pendingDecisionsRef.current = []
+  }, [])
+
+  const handleDecision = (decision: "approved" | "denied") => {
+    if (controlsLocked || isComplete || showExcessiveDeny) return
+
+    if (
+      decision === "denied" &&
+      canApprove(currentApplicant.riskLevel) &&
+      countDiscretionaryDenies(decisions, applicants) >= MAX_DISCRETIONARY_DENIES
+    ) {
+      setShowExcessiveDeny(true)
+      return
+    }
+
+    const newDecisions = [...decisions, decision]
+    setDecisions(newDecisions)
+    setControlsLocked(true)
+
+    if (decision === "approved") {
+      const slot = houses.find((h) => h.houseNumber === currentApplicant.targetHouse)
+      if (slot && !slot.occupied) {
+        pendingDecisionsRef.current = newDecisions
+        walkingApplicantRef.current = currentApplicant
+        walkTargetRef.current = slot
+        setWalkerType(currentApplicant.characterType)
+        setCharacterPosition(BOTTOM_START)
+        setCharacterScale(1)
+        setShowWalkingCharacter(true)
+        setIsWalking(true)
+        return
+      }
+    }
+
+    pendingDecisionsRef.current = newDecisions
+    advanceApplicant(newDecisions)
+  }
+
+  const simulationShell = (children: ReactNode) => (
+    <div className="min-h-[95vh] relative overflow-hidden">{children}</div>
+  )
+
+  if (isComplete) {
+    const approved = decisions.filter((d) => d === "approved").length
+    const denied = decisions.filter((d) => d === "denied").length
+
+    return simulationShell(
+      <NeighborhoodScene mapRef={mapRef}>
+        <OccupiedCharacters houses={houses} />
+        <ResultsTicker
+          approved={approved}
+          denied={denied}
+          onTryAgain={resetSimulation}
+        />
+      </NeighborhoodScene>
+    )
+  }
+
+  return simulationShell(
+    <NeighborhoodScene mapRef={mapRef}>
+      <ApplicantProgress currentIndex={currentIndex} total={applicants.length} />
+
+      <GameplayHeaderOverlay
+        applicant={currentApplicant}
+        onApprove={() => handleDecision("approved")}
+        onDeny={() => handleDecision("denied")}
+        denialMessage={getDenialMessage(currentApplicant.riskLevel)}
+        controlsDisabled={controlsLocked}
+      />
+
+      <OccupiedCharacters houses={houses} />
+
+      {showWalkingCharacter && walkerType && (
+        <div
+          className="absolute z-[22] pointer-events-none"
+          style={{
+            left: `${characterPosition.x * 100}%`,
+            top: `${characterPosition.y * 100}%`,
+            transform: CHARACTER_FOOT_TRANSFORM,
+          }}
+        >
+          <CharacterSprite
+            characterType={walkerType}
+            isWalking={isWalking}
+            scale={characterScale}
+          />
+        </div>
+      )}
+
+      {!showWalkingCharacter && !controlsLocked && currentApplicant && (
+        <BottomApplicantScene applicant={currentApplicant} />
+      )}
+
+      {showExcessiveDeny && <ExcessiveDenyOverlay onTryAgain={resetSimulation} />}
+    </NeighborhoodScene>
   )
 }

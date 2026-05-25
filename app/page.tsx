@@ -8,6 +8,7 @@ import {
   NarrativeText,
   NarrativeHighlight,
   RedliningSimulation,
+  RedliningApplicantLineup,
   SacrificeZonesSimulation,
   HealthOutcomesSimulation,
 } from "@/components/scrollytelling";
@@ -104,11 +105,11 @@ export default function EnvironmentalRacismPage() {
           <NarrativeHighlight>
             Look, people are lining up now! Using the risk scores, review their
             applications and decide if you&apos;ll offer them a mortgage to buy
-            the house they want. A high risk score means there&apos;s a higher
-            chance that you&apos;ll lose money by lending in that area, so
-            choose wisely.
+            the house they want.
           </NarrativeHighlight>
         </NarrativeSection>
+
+        {/* <RedliningApplicantLineup /> */}
 
         {/* Redlining Simulation */}
         <RedliningSimulation
@@ -120,11 +121,10 @@ export default function EnvironmentalRacismPage() {
         <NarrativeSection>
           <NarrativeHighlight>
             The risk scores seem awfully handy, but did you stop to think about
-            what factors are used to calculate them?
+            what factors are used to calculate them? 
           </NarrativeHighlight>
           <NarrativeText>
-            What do you think actually predicts whether someone will be a risky
-            borrower? Try to recreate the original risk score.
+          If you take a look at the neighborhood, you might notice that there are only circles left. Why did all the squares get their loans denied? To understand why this happened, try to figure out how those risk scores were calculated.
           </NarrativeText>
 
           {/* Placeholder for risk factor manipulation */}
@@ -399,9 +399,9 @@ export default function EnvironmentalRacismPage() {
 
         {/* References */}
         <section className="max-w-2xl mx-auto px-6 py-16">
-          <h2 className="text-xl font-bold mb-4">References</h2>
+          <h2 className="text-xl font-bold mb-4">Credits</h2>
           <p className="text-sm text-foreground/70 mb-8">
-            This explorable explanation covered a wide range of topics across
+            All illustrations were drawn by me in Procreate. This explorable explanation covered a wide range of topics across
             history, economics, environmental science, and public health. There
             are a lot of concepts that have been simplified considerably here
             and are much more complex in real life. I&apos;ve organized my
