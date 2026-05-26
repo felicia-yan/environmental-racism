@@ -6,5 +6,7 @@ export {
   RedliningSimulation,
   RedliningApplicantLineup,
 } from './simulations/redlining-simulation'
+export { RiskFactorSimulation } from './simulations/risk-factor-simulation'
+export { HomeownershipSimulation } from './simulations/homeownership-simulation'
 export { SacrificeZonesSimulation } from './simulations/sacrifice-zones-simulation'
 export { HealthOutcomesSimulation } from './simulations/health-outcomes-simulation'

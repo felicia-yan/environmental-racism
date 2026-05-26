@@ -9,6 +9,8 @@ import {
   NarrativeHighlight,
   RedliningSimulation,
   RedliningApplicantLineup,
+  RiskFactorSimulation,
+  HomeownershipSimulation,
   SacrificeZonesSimulation,
   HealthOutcomesSimulation,
 } from "@/components/scrollytelling";
@@ -85,7 +87,7 @@ export default function EnvironmentalRacismPage() {
           <NarrativeHighlight>
             Mortgages, equity, deeds... To understand what any of these terms
             have to do with highways, let&apos;s first step into the shoes of a
-            lender in 1965, with lots of cash to spare.
+            lender in 1965.
           </NarrativeHighlight>
           <NarrativeText>
             Newcomers have arrived in town, and they&apos;re looking for homes!
@@ -97,10 +99,7 @@ export default function EnvironmentalRacismPage() {
             buying a home, and who doesn&apos;t.
           </NarrativeText>
           <NarrativeText>
-            Luckily for you, your company has already mapped the risk score for
-            every neighborhood in town, which indicates how risky it will be for
-            you to lend to someone who wants to buy a house there. How
-            convenient!
+            Luckily for you, your company has calculated the risk associated with each application, which indicates how risky it will be for you to lend. How convenient!
           </NarrativeText>
           <NarrativeHighlight>
             Look, people are lining up now! Using the risk scores, review their
@@ -124,17 +123,12 @@ export default function EnvironmentalRacismPage() {
             what factors are used to calculate them? 
           </NarrativeHighlight>
           <NarrativeText>
-          If you take a look at the neighborhood, you might notice that there are only circles left. Why did all the squares get their loans denied? To understand why this happened, try to figure out how those risk scores were calculated.
+          If you take a look at the neighborhood, you might notice that there are only circles left, and they all seem to be in the same neighborhood. Why did all the squares get their loans denied? To understand why this happened, try to figure out what factors went into the risk score calculation.
           </NarrativeText>
 
-          {/* Placeholder for risk factor manipulation */}
-          <div className="w-full h-48 bg-muted rounded-lg my-8 flex items-center justify-center border-2 border-dashed border-border">
-            <span className="text-muted-foreground">
-              [Risk factor manipulation simulation placeholder]
-            </span>
-          </div>
+          <RiskFactorSimulation />
 
-          <NarrativeText>Were the risk scores calculated fairly?</NarrativeText>
+          <NarrativeText>Clearly, these risk scores weren't calculated fairly. Discrimination based on whether the applicant was a circle or a square shut people out of obtaining a mortgage, even when everything else suggested they should've been eligible. And this isn't just a hypothetical policy; a version of this happened in real life.  </NarrativeText>
         </NarrativeSection>
 
         <NarrativeSection>
@@ -164,15 +158,11 @@ export default function EnvironmentalRacismPage() {
             This is a practice known as <strong>redlining</strong>, and this
             kind of discriminatory lending is now very illegal.
           </NarrativeHighlight>
-          <NarrativeText>
-            Look at your town again, and now see the result of the decisions
-            made based on those discriminatory risk scores.
-          </NarrativeText>
         </NarrativeSection>
 
         <NarrativeSection>
           <NarrativeHighlight>
-            People who were denied a mortgage loan found other ways to buy a
+            But the story goes a little bit deeper, because people who were denied a mortgage loan found other ways to buy a
             home.
           </NarrativeHighlight>
           <NarrativeText>
@@ -185,17 +175,12 @@ export default function EnvironmentalRacismPage() {
           </NarrativeText>
           <NarrativeText>
             At first glance, a mortgage and a contract for deed both seem like
-            pretty similar ways to buy a home. Adjust the factors below to see
-            how things change for a family based on how they are paying for
-            their house.
+            pretty similar ways to buy a home. Move the time slider below to
+            see how equity builds differently depending on how a family is
+            paying for their house.
           </NarrativeText>
 
-          {/* Placeholder for equity comparison visualization */}
-          <div className="w-full h-64 bg-muted rounded-lg my-8 flex items-center justify-center border-2 border-dashed border-border">
-            <span className="text-muted-foreground">
-              [Mortgage vs Contract for Deed equity comparison placeholder]
-            </span>
-          </div>
+          <HomeownershipSimulation />
 
           <NarrativeText>
             For most households, homes are the single biggest investment

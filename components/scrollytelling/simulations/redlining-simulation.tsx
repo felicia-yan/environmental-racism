@@ -8,21 +8,17 @@ import {
   type ReactNode,
   type RefObject,
 } from "react"
-import { Check, X, HelpCircle } from "lucide-react"
+import { Check, X } from "lucide-react"
 import Image from "next/image"
+import {
+  BASE_APPLICANTS,
+  shouldApproveApplicant,
+  type ApplicantRiskProfile,
+  type CharacterType,
+  type RiskLevel,
+} from "./redlining-data"
 
-type RiskLevel = "hazardous" | "declining" | "still-desirable" | "best"
-/** Blue applicants target green-roof houses; yellow target red-roof houses */
-type CharacterType = "blue" | "yellow"
-
-interface Applicant {
-  id: number
-  name: string
-  mortgage: number
-  riskLevel: RiskLevel
-  characterType: CharacterType
-  targetHouse: number
-}
+type Applicant = ApplicantRiskProfile
 
 interface HouseSlot {
   houseNumber: number
@@ -66,10 +62,6 @@ function getRiskStyles(risk: RiskLevel) {
   }
 }
 
-function canApprove(risk: RiskLevel): boolean {
-  return risk === "best" || risk === "still-desirable"
-}
-
 function getRiskBarWidth(risk: RiskLevel): string {
   switch (risk) {
     case "hazardous":
@@ -100,7 +92,7 @@ function DecisionControls({
   disabled,
 }: DecisionControlsProps) {
   const riskStyles = getRiskStyles(applicant.riskLevel)
-  const isApprovable = canApprove(applicant.riskLevel)
+  const isApprovable = shouldApproveApplicant(applicant)
 
   const approveDisabled = !isApprovable || disabled
   const showDenialTooltip = !isApprovable && Boolean(denialMessage)
@@ -145,11 +137,11 @@ function DecisionControls({
       </div>
 
       <div className="w-full max-w-xs text-center">
-        <div className="flex items-center justify-center gap-1 mb-1">
+        <div className="flex items-center justify-center gap-1 mb-0.5">
           <p className="text-sm text-foreground/80 font-medium">Risk Level</p>
-          <HelpCircle className="w-4 h-4 text-foreground/50" aria-hidden />
+          {/* <HelpCircle className="w-4 h-4 text-foreground/50" aria-hidden /> */}
         </div>
-        <p className={`distressed-text text-2xl ${riskStyles.text} mb-2`}>
+        <p className={`distressed-text text-2xl ${riskStyles.text} mb-1`}>
           {riskStyles.label}
         </p>
         <div className="w-full h-3 bg-white/60 rounded-full overflow-hidden">
@@ -319,7 +311,7 @@ function countDiscretionaryDenies(
   applicantList: Applicant[]
 ): number {
   return decisions.reduce((count, decision, index) => {
-    if (decision === "denied" && canApprove(applicantList[index]?.riskLevel)) {
+    if (decision === "denied" && applicantList[index] && shouldApproveApplicant(applicantList[index])) {
       return count + 1
     }
     return count
@@ -421,19 +413,6 @@ interface RedliningSimulationProps {
   onComplete?: (results: { approved: number; denied: number }) => void
 }
 
-const BASE_APPLICANTS: Applicant[] = [
-  { id: 1, name: "David", mortgage: 18500, riskLevel: "declining", characterType: "yellow", targetHouse: 1 },
-  { id: 2, name: "James", mortgage: 32000, riskLevel: "hazardous", characterType: "yellow", targetHouse: 2 },
-  { id: 3, name: "Robert", mortgage: 22300, riskLevel: "declining", characterType: "yellow", targetHouse: 3 },
-  { id: 4, name: "Michael", mortgage: 19200, riskLevel: "hazardous", characterType: "yellow", targetHouse: 4 },
-  { id: 5, name: "Kevin", mortgage: 19900, riskLevel: "declining", characterType: "yellow", targetHouse: 5 },
-  { id: 6, name: "Sasha", mortgage: 20100, riskLevel: "best", characterType: "blue", targetHouse: 6 },
-  { id: 7, name: "Alice", mortgage: 25000, riskLevel: "still-desirable", characterType: "blue", targetHouse: 7 },
-  { id: 8, name: "Elena", mortgage: 15800, riskLevel: "best", characterType: "blue", targetHouse: 8 },
-  { id: 9, name: "Felicia", mortgage: 28900, riskLevel: "still-desirable", characterType: "blue", targetHouse: 9 },
-  { id: 10, name: "Jennifer", mortgage: 21500, riskLevel: "best", characterType: "blue", targetHouse: 10 },
-]
-
 const HOUSE_SLOTS: HouseSlot[] = [
   { houseNumber: 1, anchorX: 0.11, anchorY: 0.68, occupied: false },
   { houseNumber: 2, anchorX: 0.21, anchorY: 0.62, occupied: false },
@@ -447,7 +426,7 @@ const HOUSE_SLOTS: HouseSlot[] = [
   { houseNumber: 10, anchorX: 0.94, anchorY: 0.85, occupied: false },
 ]
 
-/** All 10 applicants in a row — shown before the simulation starts */
+/** All applicants in a row — shown before the simulation starts */
 export function RedliningApplicantLineup() {
   return (
     <div className="w-full overflow-x-auto py-8">
@@ -636,7 +615,7 @@ export function RedliningSimulation({ onComplete }: RedliningSimulationProps) {
 
     if (
       decision === "denied" &&
-      canApprove(currentApplicant.riskLevel) &&
+      shouldApproveApplicant(currentApplicant) &&
       countDiscretionaryDenies(decisions, applicants) >= MAX_DISCRETIONARY_DENIES
     ) {
       setShowExcessiveDeny(true)
