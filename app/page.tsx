@@ -126,7 +126,9 @@ export default function EnvironmentalRacismPage() {
           If you take a look at the neighborhood, you might notice that there are only circles left, and they all seem to be in the same neighborhood. Why did all the squares get their loans denied? To understand why this happened, try to figure out what factors went into the risk score calculation.
           </NarrativeText>
 
-          <RiskFactorSimulation />
+          <div className="my-18">
+            <RiskFactorSimulation />
+          </div>
 
           <NarrativeText>Clearly, these risk scores weren't calculated fairly. Discrimination based on whether the applicant was a circle or a square shut people out of obtaining a mortgage, even when everything else suggested they should've been eligible. And this isn't just a hypothetical policy; a version of this happened in real life.  </NarrativeText>
         </NarrativeSection>
@@ -136,7 +138,7 @@ export default function EnvironmentalRacismPage() {
             From the 1930s-60s, lenders did not assess risk based on an
             individual&apos;s personal financial history. Instead, each
             neighborhood was broadly labeled based on the racial make-up of its
-            residents and property values.
+            residents.
           </NarrativeHighlight>
           <NarrativeText>
             More specifically, neighborhoods with any number of Black residents
@@ -179,8 +181,10 @@ export default function EnvironmentalRacismPage() {
             see how equity builds differently depending on how a family is
             paying for their house.
           </NarrativeText>
-
-          <HomeownershipSimulation />
+          
+          <div className="my-18">
+            <HomeownershipSimulation />
+          </div>
 
           <NarrativeText>
             For most households, homes are the single biggest investment
