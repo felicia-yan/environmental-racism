@@ -13,6 +13,8 @@ import {
   HomeownershipSimulation,
   SacrificeZonesSimulation,
   HealthOutcomesSimulation,
+  PollutionSimulation,
+  FinalReflection,
 } from "@/components/scrollytelling";
 
 type Section = "intro" | "chapter1" | "chapter2" | "chapter3" | "conclusion";
@@ -20,7 +22,9 @@ type Section = "intro" | "chapter1" | "chapter2" | "chapter3" | "conclusion";
 export default function EnvironmentalRacismPage() {
   const [currentSection, setCurrentSection] = useState<Section>("intro");
   const [started, setStarted] = useState(false);
-  const [introStage, setIntroStage] = useState<"split" | "zoom" | "door" | "article">("split");
+  const [introStage, setIntroStage] = useState<
+    "split" | "zoom" | "door" | "article"
+  >("split");
 
   const introRevealRef = useRef<HTMLDivElement>(null);
   const chapter1Ref = useRef<HTMLDivElement>(null);
@@ -59,7 +63,9 @@ export default function EnvironmentalRacismPage() {
       {/* Intro Reveal - Highway appears */}
       <div
         ref={introRevealRef}
-        className={`min-h-screen bg-background flex flex-col items-center justify-center px-6 ${introStage !== "article" ? "hidden" : ""}`}
+        className={`min-h-screen bg-background flex flex-col items-center justify-center px-6 ${
+          introStage !== "article" ? "hidden" : ""
+        }`}
       >
         <NarrativeSection className="max-w-2xl">
           <NarrativeText>
@@ -80,7 +86,10 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 1: Redlining */}
-      <div ref={chapter1Ref} className={introStage !== "article" ? "hidden" : ""}>
+      <div
+        ref={chapter1Ref}
+        className={introStage !== "article" ? "hidden" : ""}
+      >
         <ChapterHeader chapterNumber={1} title="Redlining" totalChapters={3} />
 
         <NarrativeSection>
@@ -99,7 +108,9 @@ export default function EnvironmentalRacismPage() {
             buying a home, and who doesn&apos;t.
           </NarrativeText>
           <NarrativeText>
-            Luckily for you, your company has calculated the risk associated with each application, which indicates how risky it will be for you to lend. How convenient!
+            Luckily for you, your company has calculated the risk associated
+            with each application, which indicates how risky it will be for you
+            to lend. How convenient!
           </NarrativeText>
           <NarrativeHighlight>
             Look, people are lining up now! Using the risk scores, review their
@@ -120,17 +131,27 @@ export default function EnvironmentalRacismPage() {
         <NarrativeSection>
           <NarrativeHighlight>
             The risk scores seem awfully handy, but did you stop to think about
-            what factors are used to calculate them? 
+            what factors are used to calculate them?
           </NarrativeHighlight>
           <NarrativeText>
-          If you take a look at the neighborhood, you might notice that there are only circles left, and they all seem to be in the same neighborhood. Why did all the squares get their loans denied? To understand why this happened, try to figure out what factors went into the risk score calculation.
+            If you take a look at the neighborhood, you might notice that there
+            are only circles left, and they all seem to be in the same
+            neighborhood. Why did all the squares get their loans denied? To
+            understand why this happened, try to figure out what factors went
+            into the risk score calculation.
           </NarrativeText>
 
           <div className="my-18">
             <RiskFactorSimulation />
           </div>
 
-          <NarrativeText>Clearly, these risk scores weren't calculated fairly. Discrimination based on whether the applicant was a circle or a square shut people out of obtaining a mortgage, even when everything else suggested they should've been eligible. And this isn't just a hypothetical policy; a version of this happened in real life.  </NarrativeText>
+          <NarrativeText>
+            Clearly, these risk scores weren't calculated fairly. Discrimination
+            based on whether the applicant was a circle or a square shut people
+            out of obtaining a mortgage, even when everything else suggested
+            they should've been eligible. And this isn't just a hypothetical
+            policy; a version of this happened in real life.{" "}
+          </NarrativeText>
         </NarrativeSection>
 
         <NarrativeSection>
@@ -164,8 +185,8 @@ export default function EnvironmentalRacismPage() {
 
         <NarrativeSection>
           <NarrativeHighlight>
-            But the story goes a little bit deeper, because people who were denied a mortgage loan found other ways to buy a
-            home.
+            But the story goes a little bit deeper, because people who were
+            denied a mortgage loan found other ways to buy a home.
           </NarrativeHighlight>
           <NarrativeText>
             One of the most common options was a{" "}
@@ -177,11 +198,11 @@ export default function EnvironmentalRacismPage() {
           </NarrativeText>
           <NarrativeText>
             At first glance, a mortgage and a contract for deed both seem like
-            pretty similar ways to buy a home. Move the time slider below to
-            see how equity builds differently depending on how a family is
-            paying for their house.
+            pretty similar ways to buy a home. Move the time slider below to see
+            how equity builds differently depending on how a family is paying
+            for their house.
           </NarrativeText>
-          
+
           <div className="my-18">
             <HomeownershipSimulation />
           </div>
@@ -199,7 +220,10 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 2: Sacrifice Zones */}
-      <div ref={chapter2Ref} className={introStage !== "article" ? "hidden" : ""}>
+      <div
+        ref={chapter2Ref}
+        className={introStage !== "article" ? "hidden" : ""}
+      >
         <ChapterHeader
           chapterNumber={2}
           title="Sacrifice Zones"
@@ -221,17 +245,12 @@ export default function EnvironmentalRacismPage() {
             You&apos;ve been promoted from lender to city planner, and now you
             get to make that siting decision. Pick where you want the highway to
             go, then send your proposed map off to the citizens for a vote. If
-            your proposal doesn&apos;t pass, try again! The land needs to be
-            cheap and there needs to be enough of it.
+            your proposal doesn&apos;t pass, try again!
           </NarrativeText>
         </NarrativeSection>
 
         {/* Sacrifice Zones Simulation */}
-        <SacrificeZonesSimulation
-          onComplete={() => {
-            console.log("Sacrifice zones simulation complete");
-          }}
-        />
+        <SacrificeZonesSimulation />
 
         <NarrativeSection>
           <NarrativeHighlight>
@@ -289,11 +308,8 @@ export default function EnvironmentalRacismPage() {
             industrial sites.
           </NarrativeText>
 
-          {/* Placeholder for pollution types visualization */}
-          <div className="w-full h-48 bg-muted rounded-lg my-8 flex items-center justify-center border-2 border-dashed border-border">
-            <span className="text-muted-foreground">
-              [Pollution types visualization placeholder]
-            </span>
+          <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen my-18">
+            <PollutionSimulation />
           </div>
 
           <NarrativeText>
@@ -306,7 +322,10 @@ export default function EnvironmentalRacismPage() {
       </div>
 
       {/* Chapter 3: Health Outcomes */}
-      <div ref={chapter3Ref} className={introStage !== "article" ? "hidden" : ""}>
+      <div
+        ref={chapter3Ref}
+        className={introStage !== "article" ? "hidden" : ""}
+      >
         <ChapterHeader
           chapterNumber={3}
           title="Health Outcomes"
@@ -316,50 +335,37 @@ export default function EnvironmentalRacismPage() {
         <NarrativeSection>
           <NarrativeHighlight>
             For people who wake up every day with a highway at their doorstep,
-            cars driving by are more than just an eyesore; it can also have a
-            lasting impact on their health.
+            cars driving by are more than just an eyesore or inconvenience; it
+            can have a lasting impact on their health.
           </NarrativeHighlight>
           <NarrativeText>
             As a city planner, you already saw all kinds of pollution that can
-            come from a highway, but what does this mean in the long term? Run
-            simulations to see how the highway affects the health of your
-            neighbors over time.
+            come from a highway, but what does this mean in the long term?
+            Adjust the resident's distance from the highway to see how it
+            impacts her risks to health conditions.
           </NarrativeText>
         </NarrativeSection>
 
         {/* Health Outcomes Simulation */}
-        <HealthOutcomesSimulation
-          onComplete={() => {
-            console.log("Health outcomes simulation complete");
-          }}
-        />
-
-        <NarrativeSection>
-          <NarrativeHighlight>
-            Woah, that was a lot of information. For the big finale, let&apos;s
-            put everything you&apos;ve learned together.
-          </NarrativeHighlight>
-          <NarrativeText>
-            It seems like everything is connected somehow...
-          </NarrativeText>
-
-          {/* Placeholder for connection diagram builder */}
-          <div className="w-full h-64 bg-muted rounded-lg my-8 flex items-center justify-center border-2 border-dashed border-border">
-            <span className="text-muted-foreground">
-              [Connection diagram builder - work backwards from health outcomes
-              placeholder]
-            </span>
-          </div>
-        </NarrativeSection>
+        <HealthOutcomesSimulation />
       </div>
 
       {/* Conclusion */}
-      <div ref={conclusionRef} className={`min-h-screen bg-background ${introStage !== "article" ? "hidden" : ""}`}>
-        <NarrativeSection className="py-24">
-          <NarrativeHighlight>Everything is connected.</NarrativeHighlight>
+      <div
+        ref={conclusionRef}
+        className={`min-h-screen bg-background ${
+          introStage !== "article" ? "hidden" : ""
+        }`}
+      >
+        <NarrativeSection>
+          <NarrativeHighlight>
+            Now, putting everything you&apos;ve learned together: environmental
+            racism is caused by a combination of systemic factors.
+          </NarrativeHighlight>
           <NarrativeText>
             <strong>
-              Neighborhoods are denied access to opportunities by redlining.
+              Neighborhoods were historically denied access to opportunities by
+              redlining.
             </strong>
           </NarrativeText>
           <NarrativeText>
@@ -368,46 +374,44 @@ export default function EnvironmentalRacismPage() {
           </NarrativeText>
           <NarrativeText>
             <strong>
-              Those same neighborhoods face disproportionate exposure to
-              environmental hazards.
+              As a result, those same neighborhoods face disproportionate
+              exposure to environmental hazards.{" "}
             </strong>
-          </NarrativeText>
-          <NarrativeText>
             Heightened exposure over a lifetime increases incidence of serious
             health conditions like asthma and cancer.
           </NarrativeText>
           <NarrativeHighlight>
             This is <strong>environmental racism</strong>, and it's still
-            happening all around us.
-          </NarrativeHighlight>
-          <NarrativeHighlight>
-            In this new age of industrial facilties from data centers to lithium
-            refineries, consider: where are they being built, and why?
+            happening today. In this new age of industrial facilties from data
+            centers to lithium refineries, consider: where are they being built,
+            and why?
           </NarrativeHighlight>
         </NarrativeSection>
-
         {/* References */}
         <section className="max-w-2xl mx-auto px-6 py-16">
           <h2 className="text-xl font-bold mb-4">Credits</h2>
+
           <p className="text-sm text-foreground/70 mb-8">
-            All illustrations were drawn by me in Procreate. This explorable explanation covered a wide range of topics across
-            history, economics, environmental science, and public health. There
-            are a lot of concepts that have been simplified considerably here
-            and are much more complex in real life. I&apos;ve organized my
-            sources below, including some links to other cool related
-            interactive visualizations if you&apos;d like to learn more:
+            All illustrations were drawn by me in Procreate, with code from a
+            combination of AI tools and myself. This explorable explanation
+            covered a wide range of topics across history, economics, and
+            environmental public health. There are a lot of concepts that have
+            been simplified considerably here and are much more complex in real
+            life. I’ve organized my sources below, including some links to other
+            related interactive visualizations if you’d like to learn more:
           </p>
 
           <div className="space-y-8 text-xs">
+            {/* HISTORY */}
             <div>
               <h3 className="font-bold text-base mb-3">
-                US History (on redlining, segregation, racial covenants)
+                US History (redlining, segregation, racial covenants)
               </h3>
               <ul className="space-y-2 text-foreground/80">
                 <li>
                   <a
-                    href="https://dsl.richmond.edu/panorama/redlining/"
                     className="text-secondary hover:underline"
+                    href="https://dsl.richmond.edu/panorama/redlining/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -416,141 +420,163 @@ export default function EnvironmentalRacismPage() {
                 </li>
                 <li>
                   <a
+                    className="text-secondary hover:underline"
                     href="https://daily.jstor.org/the-uneven-costs-of-cross-country-connectivity/"
-                    className="text-secondary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    JSTOR Daily: The Uneven Costs of Cross-Country Connectivity
+                    The Uneven Costs of Cross-Country Connectivity
                   </a>
                 </li>
                 <li>
                   <a
+                    className="text-secondary hover:underline"
                     href="https://www.npr.org/2021/04/07/984784455/a-brief-history-of-how-racism-shaped-interstate-highways"
-                    className="text-secondary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    NPR: A Brief History of How Racism Shaped Interstate
-                    Highways
+                    A Brief History of How Racism Shaped Interstate Highways
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://heinonline.org/HOL/P?h=hein.journals/vanlr73&i=1298"
                     className="text-secondary hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Vanderbilt Law Review
-                  </a>
-                </li>
-                <li>
-                  <a
                     href="https://storymaps.arcgis.com/stories/0f58d49c566b486482b3e64e9e5f7ac9"
-                    className="text-secondary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    ArcGIS StoryMaps
+                    The Lines That Shape Our Cities (ArcGIS StoryMaps)
                   </a>
                 </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-base mb-3">
-                NC History (on the Hayti District, urban renewal in Durham)
-              </h3>
-              <ul className="space-y-2 text-foreground/80">
                 <li>
                   <a
+                    className="text-secondary hover:underline"
                     href="https://plantationstopollution.selc.org/hayti-nc/"
-                    className="text-secondary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Plantations to Pollution: Hayti, NC
+                    Plantations to Pollution: From Stagville to Hayti
                   </a>
                 </li>
                 <li>
-                  <span>
-                    Vann, A. D., & Jones, B. W. (1999). Durham&apos;s Hayti.
-                    Arcadia Publishing.
-                  </span>
-                </li>
-                <li>
-                  <span>
-                    Williams, O.R. (2006). Memories of Hayti: African American
-                    Community in Durham, North Carolina, 1890–1970. In: The
-                    Black Urban Community. Palgrave Macmillan.
-                  </span>
+                  <a
+                    className="text-secondary hover:underline"
+                    href="https://doi.org/10.1007/978-1-349-73572-3_3"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Memories of Hayti: African American Community in Durham,
+                    North Carolina, 1890–1970 (Williams, 2006)
+                  </a>
                 </li>
                 <li>
                   <a
+                    className="text-secondary hover:underline"
                     href="https://www.digitalnc.org/primary-source-sets/urban-development-and-renewal/"
-                    className="text-secondary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Digital NC: Urban Development and Renewal
+                    DigitalNC: Urban Development and Renewal Primary Sources
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://healthydurham.org/wp-content/uploads/Durham-Health-and-History-Report-Final-October-2024.pdf"
                     className="text-secondary hover:underline"
+                    href="https://healthydurham.org/wp-content/uploads/Durham-Health-and-History-Report-Final-October-2024.pdf"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Durham Health and History Report (2024)
+                    Durham’s Health and History Report (2024)
                   </a>
                 </li>
               </ul>
             </div>
 
+            {/* ECONOMICS */}
             <div>
               <h3 className="font-bold text-base mb-3">
-                Economics (on mortgages, contracts for deeds, home equity)
+                Economics (mortgages, contracts for deeds, home equity)
               </h3>
               <ul className="space-y-2 text-foreground/80">
                 <li>
                   <a
-                    href="https://home.treasury.gov/news/featured-stories/racial-differences-in-economic-security-housing"
                     className="text-secondary hover:underline"
+                    href="https://home.treasury.gov/news/featured-stories/racial-differences-in-economic-security-housing"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    US Treasury: Racial Differences in Economic Security -
+                    U.S. Treasury: Racial Differences in Economic Security —
                     Housing
                   </a>
                 </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-base mb-3">
-                Environmental Justice (on environmental racism, SDOH)
-              </h3>
-              <ul className="space-y-2 text-foreground/80">
                 <li>
                   <a
-                    href="https://www.propublica.org/article/toxmap-poison-in-the-air"
                     className="text-secondary hover:underline"
+                    href="https://www.housingstudies.org/blog/old-mortgage-alternative-makes-a-controversial-resur/"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    ProPublica: Poison in the Air
+                    Old Mortgage Alternative Makes a Controversial Resurgence
                   </a>
                 </li>
                 <li>
                   <a
-                    href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2813184"
                     className="text-secondary hover:underline"
+                    href="https://www.minneapolisfed.org/article/2009/risks-and-realities-of-the-contract-for-deed"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    JAMA Network Open
+                    Risks and Realities of the Contract for Deed
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* ENVIRONMENTAL HEALTH */}
+            <div>
+              <h3 className="font-bold text-base mb-3">
+                Environmental Public Health (air pollution, highways, SDOH)
+              </h3>
+              <ul className="space-y-2 text-foreground/80">
+                <li>
+                  <a
+                    className="text-secondary hover:underline"
+                    href="https://www.propublica.org/article/toxmap-poison-in-the-air"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ProPublica: Sacrifice Zones — Poison in the Air
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="text-secondary hover:underline"
+                    href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2813184"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Residential Structural Racism and Prevalence of Chronic
+                    Health Conditions (Mohottige et al., 2023)
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="text-secondary hover:underline"
+                    href="https://www.epa.gov/air-research/research-near-roadway-and-other-near-source-air-pollution"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    EPA: Near Roadway Air Pollution Research
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="text-secondary hover:underline"
+                    href="https://www.urban.org/sites/default/files/2022-11/The%20Polluted%20Life%20Near%20the%20Highway.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Urban Institute: The Polluted Life Near the Highway
                   </a>
                 </li>
               </ul>
