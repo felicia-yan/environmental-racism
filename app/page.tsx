@@ -377,8 +377,8 @@ export default function EnvironmentalRacismPage() {
               As a result, those same neighborhoods face disproportionate
               exposure to environmental hazards.{" "}
             </strong>
-            Heightened exposure over a lifetime increases incidence of serious
-            health conditions like asthma and cancer.
+            Heightened exposure over a lifetime can significantly increase the
+            risk of serious health conditions like asthma and cancer.
           </NarrativeText>
           <NarrativeHighlight>
             This is <strong>environmental racism</strong>, and it's still

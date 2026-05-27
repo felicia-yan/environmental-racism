@@ -306,3 +306,40 @@
   border-radius: 8px;
   overflow: hidden;
 }
+
+@keyframes doorFadeOut {
+  0% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    filter: blur(6px);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes highwayFadeIn {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: scale(1);
+  }
+}
+
+.animate-door-fade-out {
+  animation: doorFadeOut 2.2s ease-in-out forwards;
+}
+
+.animate-highway-fade-in {
+  opacity: 0;
+  animation: highwayFadeIn 2.2s ease-in-out forwards;
+}

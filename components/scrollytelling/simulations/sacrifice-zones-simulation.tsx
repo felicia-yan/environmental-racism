@@ -345,7 +345,7 @@ function ResultNotification({
           </div>
         </div>
 
-        {!approved && blockedBy.length > 0 && (
+        {/* {!approved && blockedBy.length > 0 && (
           <div className="mt-3 pt-3 border-t border-white/20">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-90 mb-2">
               <Users className="w-3.5 h-3.5" />
@@ -363,7 +363,7 @@ function ResultNotification({
               ))}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

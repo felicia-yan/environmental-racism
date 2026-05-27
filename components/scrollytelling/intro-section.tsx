@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 
@@ -13,6 +13,8 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
   const [stage, setStage] = useState<"split" | "zoom" | "door" | "article">(
     "split"
   );
+  const doorAudioRef = useRef<HTMLAudioElement | null>(null);
+  const trafficAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const updateStage = (newStage: "split" | "zoom" | "door" | "article") => {
     setStage(newStage);
@@ -24,11 +26,52 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
   };
 
   const handleDoorClick = () => {
+    // play door sound
+    doorAudioRef.current?.play();
+
     updateStage("door");
+
+    // start traffic after short delay
+    setTimeout(() => {
+      trafficAudioRef.current?.play();
+    }, 3000);
+
     setTimeout(() => {
       updateStage("article");
-    }, 800);
+    }, 2000);
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+
+      // stop traffic once user scrolls down enough
+      if (scrollY > window.innerHeight * 0.8) {
+        trafficAudioRef.current?.pause();
+        trafficAudioRef.current!.currentTime = 0;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    doorAudioRef.current = new Audio("/door opening.mp3");
+    trafficAudioRef.current = new Audio("/traffic.mp3");
+
+    // optional settings
+    trafficAudioRef.current.loop = true;
+    trafficAudioRef.current.volume = 0.5;
+
+    return () => {
+      doorAudioRef.current?.pause();
+      trafficAudioRef.current?.pause();
+    };
+  }, []);
 
   return (
     <section
@@ -128,15 +171,28 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
 
       {/* Stage 3: Door Opens */}
       {stage === "door" && (
-        <div className="fixed inset-0 w-full h-screen z-30 overflow-hidden animate-in fade-in duration-300">
-          {/* Highway background revealed - not zoomed in */}
-          <Image
-            src="/highway.png"
-            alt="Highway outside"
-            fill
-            className="object-cover scale-100"
-            priority
-          />
+        <div className="fixed inset-0 w-full h-screen z-30 overflow-hidden bg-black">
+          {/* Highway underneath */}
+          <div className="absolute inset-0 animate-highway-fade-in z-0">
+            <Image
+              src="/highway.png"
+              alt="Highway outside"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+
+          {/* Doorway on top */}
+          <div className="absolute inset-0 animate-door-fade-out z-10">
+            <Image
+              src="/doorway.png"
+              alt="Doorway"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
         </div>
       )}
 
@@ -155,7 +211,11 @@ export function IntroSection({ onStart, onStageChange }: IntroSectionProps) {
             />
             {/* Back button - attached to this section */}
             <button
-              onClick={() => updateStage("split")}
+              onClick={() => {
+                trafficAudioRef.current?.pause();
+                trafficAudioRef.current!.currentTime = 0;
+                updateStage("split");
+              }}
               className="absolute top-4 left-4 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white hover:shadow-lg transition-all"
               aria-label="Back to start"
             >

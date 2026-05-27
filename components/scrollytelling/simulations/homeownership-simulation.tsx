@@ -1,144 +1,150 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Clock, Info } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
+import Image from "next/image";
+import { Clock, Info } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
-import type { CharacterType } from "./redlining-data"
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import type { CharacterType } from "./redlining-data";
 
-const MIN_YEAR = 1
-const MAX_YEAR = 40
-const BAR_TRACK_HEIGHT = 360
-const BAR_WIDTH = 22
-const EQUITY_OVERFLOW_OPACITY = 0.42
-const BAR_END_RADIUS = "rounded-b-full rounded-t-none"
+const MIN_YEAR = 1;
+const MAX_YEAR = 40;
+const BAR_TRACK_HEIGHT = 360;
+const BAR_WIDTH = 22;
+const EQUITY_OVERFLOW_OPACITY = 0.42;
+const BAR_END_RADIUS = "rounded-b-full rounded-t-none";
 
-const PAID_COLOR = "#00CB4C"
-const EQUITY_COLOR = "#6C36FF"
+const PAID_COLOR = "#00CB4C";
+const EQUITY_COLOR = "#6C36FF";
 
 /** 1965 dollars — $20,000 mortgage with principal paid shown in bars */
-const PURCHASE_YEAR = 1965
-const MORTGAGE_PRINCIPAL = 20_000
-const MONTHLY_PAYMENT = 67
-const ANNUAL_PAYMENT = MONTHLY_PAYMENT * 12
-const MORTGAGE_TERM_YEARS = 30
-const TOTAL_PAID_AT_TERM = ANNUAL_PAYMENT * MORTGAGE_TERM_YEARS
-const HOME_VALUE_AT_PURCHASE = 20_000
-const ANNUAL_HOME_APPRECIATION = 0.04
+const PURCHASE_YEAR = 1965;
+const MORTGAGE_PRINCIPAL = 20_000;
+const MONTHLY_PAYMENT = 67;
+const ANNUAL_PAYMENT = MONTHLY_PAYMENT * 12;
+const MORTGAGE_TERM_YEARS = 30;
+const TOTAL_PAID_AT_TERM = ANNUAL_PAYMENT * MORTGAGE_TERM_YEARS;
+const HOME_VALUE_AT_PURCHASE = 20_000;
+const ANNUAL_HOME_APPRECIATION = 0.04;
 
-const ADULT_WIDTH = 52
-const ADULT_HEIGHT = 68
-const CHILD_WIDTH = 32
-const CHILD_HEIGHT = 42
+const ADULT_WIDTH = 52;
+const ADULT_HEIGHT = 68;
+const CHILD_WIDTH = 32;
+const CHILD_HEIGHT = 42;
 
-const EVICTION_YEAR = 20
-const EQUITY_ACCELERATION_START_YEAR = 20
+const EVICTION_YEAR = 20;
+const EQUITY_ACCELERATION_START_YEAR = 20;
 
-const PAID_TOOLTIP = `Total paid toward the home (1965 dollars: ~$${MONTHLY_PAYMENT}/mo shown as principal paid).`
+const PAID_TOOLTIP = `Total paid toward the home.`;
 const EQUITY_TOOLTIP =
-  "Value owned in the home (1965 dollars)—stake if sold today, including appreciation."
+  "Value owned in the home, or stake if sold today, including appreciation.";
 
-type ColumnDeltas = { paid: number | null; equity: number | null }
-type YearDeltas = { left: ColumnDeltas; right: ColumnDeltas }
+type ColumnDeltas = { paid: number | null; equity: number | null };
+type YearDeltas = { left: ColumnDeltas; right: ColumnDeltas };
 
 function getYearsOfPayments(year: number): number {
-  return Math.min(Math.max(year, 0), MORTGAGE_TERM_YEARS)
+  return Math.min(Math.max(year, 0), MORTGAGE_TERM_YEARS);
 }
 
 function getCumulativePaid(year: number): number {
-  return getYearsOfPayments(year) * ANNUAL_PAYMENT
+  return getYearsOfPayments(year) * ANNUAL_PAYMENT;
 }
 
 function getRemainingPrincipal(year: number): number {
   const principalPaid =
-    (getYearsOfPayments(year) / MORTGAGE_TERM_YEARS) * MORTGAGE_PRINCIPAL
-  return Math.max(0, MORTGAGE_PRINCIPAL - principalPaid)
+    (getYearsOfPayments(year) / MORTGAGE_TERM_YEARS) * MORTGAGE_PRINCIPAL;
+  return Math.max(0, MORTGAGE_PRINCIPAL - principalPaid);
 }
 
 function getHomeValue(year: number): number {
-  return HOME_VALUE_AT_PURCHASE * (1 + ANNUAL_HOME_APPRECIATION) ** Math.max(year - 1, 0)
+  return (
+    HOME_VALUE_AT_PURCHASE *
+    (1 + ANNUAL_HOME_APPRECIATION) ** Math.max(year - 1, 0)
+  );
 }
 
 function getPaidProgress(year: number): number {
-  return getCumulativePaid(year) / TOTAL_PAID_AT_TERM
+  return getCumulativePaid(year) / TOTAL_PAID_AT_TERM;
 }
 
 function getMortgageEquityDollars(year: number): number {
-  const paid = getPaidDollars(year)
-  if (year <= EQUITY_ACCELERATION_START_YEAR) return paid
+  const paid = getPaidDollars(year);
+  if (year <= EQUITY_ACCELERATION_START_YEAR) return paid;
 
-  const yearsPastAcceleration = year - EQUITY_ACCELERATION_START_YEAR
-  const appreciationMultiplier = (1 + ANNUAL_HOME_APPRECIATION) ** yearsPastAcceleration - 1
+  const yearsPastAcceleration = year - EQUITY_ACCELERATION_START_YEAR;
+  const appreciationMultiplier =
+    (1 + ANNUAL_HOME_APPRECIATION) ** yearsPastAcceleration - 1;
   const accelerationBonus =
-    HOME_VALUE_AT_PURCHASE * appreciationMultiplier * (0.55 + yearsPastAcceleration / 35)
+    HOME_VALUE_AT_PURCHASE *
+    appreciationMultiplier *
+    (0.55 + yearsPastAcceleration / 35);
 
-  return Math.round(paid + accelerationBonus)
+  return Math.round(paid + accelerationBonus);
 }
 
 function getMortgageEquityProgress(year: number): number {
-  return getMortgageEquityDollars(year) / TOTAL_PAID_AT_TERM
+  return getMortgageEquityDollars(year) / TOTAL_PAID_AT_TERM;
 }
 
 function getProgressScaleMax(): number {
-  return getPaidProgress(MORTGAGE_TERM_YEARS)
+  return getPaidProgress(MORTGAGE_TERM_YEARS);
 }
 
 function progressToHeight(progress: number): number {
-  return (progress / getProgressScaleMax()) * BAR_TRACK_HEIGHT
+  return (progress / getProgressScaleMax()) * BAR_TRACK_HEIGHT;
 }
 
 function getContractEquityProgress(_year: number): number {
-  return 0
+  return 0;
 }
 
 function getPaidDollars(year: number): number {
-  return getCumulativePaid(year)
+  return getCumulativePaid(year);
 }
 
 function getContractEquityDollars(_year: number): number {
-  return 0
+  return 0;
 }
 
 /** Contract for deed: payments stop after eviction (missed payment at year 30). */
 function getContractPaymentYears(year: number): number {
-  if (year >= EVICTION_YEAR) return EVICTION_YEAR - 1
-  return Math.min(Math.max(year, 0), MORTGAGE_TERM_YEARS)
+  if (year >= EVICTION_YEAR) return EVICTION_YEAR - 1;
+  return Math.min(Math.max(year, 0), MORTGAGE_TERM_YEARS);
 }
 
 function getContractPaidDollars(year: number): number {
-  return getContractPaymentYears(year) * ANNUAL_PAYMENT
+  return getContractPaymentYears(year) * ANNUAL_PAYMENT;
 }
 
 function getContractPaidProgress(year: number): number {
-  return getContractPaidDollars(year) / TOTAL_PAID_AT_TERM
+  return getContractPaidDollars(year) / TOTAL_PAID_AT_TERM;
 }
 
 function formatMoney1965(amount: number): string {
-  return `$${Math.round(amount).toLocaleString("en-US")}`
+  return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
 function getFamilySize(year: number): number {
-  if (year <= 6) return 2
-  if (year <= 12) return 3
-  if (year <= 20) return 4
-  return 4
+  if (year <= 6) return 2;
+  if (year <= 12) return 3;
+  if (year <= 20) return 4;
+  return 4;
 }
 
 function getCharacterSprite(characterType: CharacterType): string {
   return characterType === "yellow"
     ? "/redlining/yellow idle.png"
-    : "/redlining/blue idle.png"
+    : "/redlining/blue idle.png";
 }
 
 function formatDeltaCurrency(amount: number): string {
-  const sign = amount >= 0 ? "+" : "−"
-  return `${sign}$${Math.abs(amount).toLocaleString("en-US")}`
+  const sign = amount >= 0 ? "+" : "−";
+  return `${sign}$${Math.abs(amount).toLocaleString("en-US")}`;
 }
 
 function BarLabelTooltip({ description }: { description: string }) {
@@ -157,7 +163,7 @@ function BarLabelTooltip({ description }: { description: string }) {
         {description}
       </TooltipContent>
     </Tooltip>
-  )
+  );
 }
 
 function DeltaFloat({
@@ -165,9 +171,9 @@ function DeltaFloat({
   color,
   fillHeight,
 }: {
-  amount: number
-  color: string
-  fillHeight: number
+  amount: number;
+  color: string;
+  fillHeight: number;
 }) {
   return (
     <span
@@ -179,7 +185,7 @@ function DeltaFloat({
     >
       {formatDeltaCurrency(amount)}
     </span>
-  )
+  );
 }
 
 function ProgressColumn({
@@ -193,37 +199,39 @@ function ProgressColumn({
   allowEquityOverflow = false,
   paidReference,
 }: {
-  label: string
-  tooltip: string
-  amountText: string
-  value: number
-  fillColor: string
-  deltaAmount: number | null
-  deltaColor: string
-  allowEquityOverflow?: boolean
-  paidReference?: number
+  label: string;
+  tooltip: string;
+  amountText: string;
+  value: number;
+  fillColor: string;
+  deltaAmount: number | null;
+  deltaColor: string;
+  allowEquityOverflow?: boolean;
+  paidReference?: number;
 }) {
-  const fillHeight = progressToHeight(value)
+  const fillHeight = progressToHeight(value);
   const overflowHeight = allowEquityOverflow
     ? Math.max(0, fillHeight - BAR_TRACK_HEIGHT)
-    : 0
+    : 0;
   const inTrackFillHeight =
-    overflowHeight > 0 ? BAR_TRACK_HEIGHT : Math.min(fillHeight, BAR_TRACK_HEIGHT)
+    overflowHeight > 0
+      ? BAR_TRACK_HEIGHT
+      : Math.min(fillHeight, BAR_TRACK_HEIGHT);
 
   const paidHeight =
     allowEquityOverflow && paidReference !== undefined
       ? progressToHeight(paidReference)
-      : 0
+      : 0;
   const showPaidMarker =
     allowEquityOverflow &&
     value > 0 &&
     paidReference !== undefined &&
     paidReference > 0 &&
-    fillHeight > paidHeight
+    fillHeight > paidHeight;
 
   const deltaAnchorHeight = allowEquityOverflow
     ? fillHeight
-    : Math.min(fillHeight, BAR_TRACK_HEIGHT)
+    : Math.min(fillHeight, BAR_TRACK_HEIGHT);
 
   return (
     <div className="flex flex-col items-center gap-2.5">
@@ -295,7 +303,7 @@ function ProgressColumn({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function SideBars({
@@ -306,12 +314,12 @@ function SideBars({
   deltas,
   showEquityOverflow = false,
 }: {
-  paid: number
-  equity: number
-  paidDollars: number
-  equityDollars: number
-  deltas: ColumnDeltas
-  showEquityOverflow?: boolean
+  paid: number;
+  equity: number;
+  paidDollars: number;
+  equityDollars: number;
+  deltas: ColumnDeltas;
+  showEquityOverflow?: boolean;
 }) {
   return (
     <div className="flex gap-5 overflow-visible">
@@ -336,7 +344,7 @@ function SideBars({
         paidReference={showEquityOverflow ? paid : undefined}
       />
     </div>
-  )
+  );
 }
 
 function FamilyLineup({
@@ -344,34 +352,38 @@ function FamilyLineup({
   year,
   side,
 }: {
-  characterType: CharacterType
-  year: number
-  side: "left" | "right"
+  characterType: CharacterType;
+  year: number;
+  side: "left" | "right";
 }) {
-  const evicted = side === "left" && year >= EVICTION_YEAR
-  const familySize = evicted ? getFamilySize(EVICTION_YEAR - 1) : getFamilySize(year)
-  const adultCount = Math.min(2, familySize)
-  const childCount = Math.max(0, familySize - adultCount)
-  const sprite = getCharacterSprite(characterType)
+  const evicted = side === "left" && year >= EVICTION_YEAR;
+  const familySize = evicted
+    ? getFamilySize(EVICTION_YEAR - 1)
+    : getFamilySize(year);
+  const adultCount = Math.min(2, familySize);
+  const childCount = Math.max(0, familySize - adultCount);
+  const sprite = getCharacterSprite(characterType);
 
   const members = [
     ...Array.from({ length: adultCount }, () => "adult" as const),
     ...Array.from({ length: childCount }, () => "child" as const),
-  ]
+  ];
 
   return (
     <div
       className={cn(
         "absolute bottom-[22%] z-[5] flex items-end justify-center transition-transform duration-700 ease-in-out",
-        side === "left" ? "left-[30%] -translate-x-1/2" : "left-[65%] -translate-x-1/2",
+        side === "left"
+          ? "left-[30%] -translate-x-1/2"
+          : "left-[65%] -translate-x-1/2",
         evicted && "-translate-x-[280%] opacity-0"
       )}
       aria-hidden
     >
       {members.map((role, index) => {
-        const isChild = role === "child"
-        const width = isChild ? CHILD_WIDTH : ADULT_WIDTH
-        const height = isChild ? CHILD_HEIGHT : ADULT_HEIGHT
+        const isChild = role === "child";
+        const width = isChild ? CHILD_WIDTH : ADULT_WIDTH;
+        const height = isChild ? CHILD_HEIGHT : ADULT_HEIGHT;
 
         return (
           <Image
@@ -386,20 +398,21 @@ function FamilyLineup({
             )}
             style={{ width, height, zIndex: index }}
           />
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 function computeYearDeltas(previousYear: number, nextYear: number): YearDeltas {
   const leftPaidDelta =
-    getContractPaidDollars(nextYear) - getContractPaidDollars(previousYear)
-  const rightPaidDelta = getPaidDollars(nextYear) - getPaidDollars(previousYear)
+    getContractPaidDollars(nextYear) - getContractPaidDollars(previousYear);
+  const rightPaidDelta =
+    getPaidDollars(nextYear) - getPaidDollars(previousYear);
   const contractEquityDelta =
-    getContractEquityDollars(nextYear) - getContractEquityDollars(previousYear)
+    getContractEquityDollars(nextYear) - getContractEquityDollars(previousYear);
   const mortgageEquityDelta =
-    getMortgageEquityDollars(nextYear) - getMortgageEquityDollars(previousYear)
+    getMortgageEquityDollars(nextYear) - getMortgageEquityDollars(previousYear);
 
   return {
     left: {
@@ -410,37 +423,46 @@ function computeYearDeltas(previousYear: number, nextYear: number): YearDeltas {
       paid: rightPaidDelta !== 0 ? rightPaidDelta : null,
       equity: mortgageEquityDelta !== 0 ? mortgageEquityDelta : null,
     },
-  }
+  };
 }
 
 export function HomeownershipSimulation() {
-  const [year, setYear] = useState(MIN_YEAR)
-  const [yearDeltas, setYearDeltas] = useState<YearDeltas | null>(null)
-  const previousYearRef = useRef(MIN_YEAR)
+  const [year, setYear] = useState(MIN_YEAR);
+  const [yearDeltas, setYearDeltas] = useState<YearDeltas | null>(null);
+  const previousYearRef = useRef(MIN_YEAR);
 
-  const mortgagePaid = useMemo(() => getPaidProgress(year), [year])
-  const contractPaid = useMemo(() => getContractPaidProgress(year), [year])
-  const mortgagePaidDollars = useMemo(() => getPaidDollars(year), [year])
-  const contractPaidDollars = useMemo(() => getContractPaidDollars(year), [year])
+  const mortgagePaid = useMemo(() => getPaidProgress(year), [year]);
+  const contractPaid = useMemo(() => getContractPaidProgress(year), [year]);
+  const mortgagePaidDollars = useMemo(() => getPaidDollars(year), [year]);
+  const contractPaidDollars = useMemo(
+    () => getContractPaidDollars(year),
+    [year]
+  );
 
-  const mortgageEquity = useMemo(() => getMortgageEquityProgress(year), [year])
-  const mortgageEquityDollars = useMemo(() => getMortgageEquityDollars(year), [year])
-  const contractEquity = useMemo(() => getContractEquityProgress(year), [year])
-  const contractEquityDollars = useMemo(() => getContractEquityDollars(year), [year])
+  const mortgageEquity = useMemo(() => getMortgageEquityProgress(year), [year]);
+  const mortgageEquityDollars = useMemo(
+    () => getMortgageEquityDollars(year),
+    [year]
+  );
+  const contractEquity = useMemo(() => getContractEquityProgress(year), [year]);
+  const contractEquityDollars = useMemo(
+    () => getContractEquityDollars(year),
+    [year]
+  );
 
   useEffect(() => {
-    const previousYear = previousYearRef.current
-    if (previousYear === year) return
+    const previousYear = previousYearRef.current;
+    if (previousYear === year) return;
 
-    setYearDeltas(computeYearDeltas(previousYear, year))
-    previousYearRef.current = year
+    setYearDeltas(computeYearDeltas(previousYear, year));
+    previousYearRef.current = year;
 
-    const timeout = window.setTimeout(() => setYearDeltas(null), 1200)
-    return () => window.clearTimeout(timeout)
-  }, [year])
+    const timeout = window.setTimeout(() => setYearDeltas(null), 1200);
+    return () => window.clearTimeout(timeout);
+  }, [year]);
 
-  const leftDeltas = yearDeltas?.left ?? { paid: null, equity: null }
-  const rightDeltas = yearDeltas?.right ?? { paid: null, equity: null }
+  const leftDeltas = yearDeltas?.left ?? { paid: null, equity: null };
+  const rightDeltas = yearDeltas?.right ?? { paid: null, equity: null };
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -449,36 +471,33 @@ export function HomeownershipSimulation() {
           <div className="absolute inset-0 bg-[#e8f0d8]" />
 
           <div className="absolute inset-0">
-        
-        {/* Base image */}
-        <img
-          src="/homeownership/bg-homeownership.png"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
-          aria-hidden
-        />
-
-        {/* Grayscale left half */}
-        {year >= EVICTION_YEAR && (
-          <div className="absolute inset-y-0 left-0 w-1/2 overflow-hidden">
+            {/* Base image */}
             <img
               src="/homeownership/bg-homeownership.png"
               alt=""
-              className="absolute inset-0 h-full w-full min-w-[100vw] object-cover object-[center_42%] grayscale"
+              className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
               aria-hidden
             />
+
+            {/* Grayscale left half */}
+            {year >= EVICTION_YEAR && (
+              <div className="absolute inset-y-0 left-0 w-1/2 overflow-hidden">
+                <img
+                  src="/homeownership/bg-homeownership.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full min-w-[100vw] object-cover object-[center_42%] grayscale brightness-60"
+                  aria-hidden
+                />
+              </div>
+            )}
+
+            <div
+              className="pointer-events-none absolute inset-y-0 left-1/2 z-[1] w-0 border-l border-dashed border-foreground/35"
+              aria-hidden
+            />
+
+            <div className="absolute">{/* rest of your content */}</div>
           </div>
-        )}
-
-        <div
-          className="pointer-events-none absolute inset-y-0 left-1/2 z-[1] w-0 border-l border-dashed border-foreground/35"
-          aria-hidden
-        />
-
-        <div className="absolute">
-          {/* rest of your content */}
-        </div>
-</div>
 
           <div
             className="pointer-events-none absolute inset-y-0 left-1/2 z-[1] w-0 border-l border-dashed border-foreground/35"
@@ -502,25 +521,30 @@ export function HomeownershipSimulation() {
 
           {year >= EVICTION_YEAR && (
             <div className="absolute left-1/2 top-[12%] z-20 -translate-x-1/2 rounded-lg bg-white/90 px-3 py-2 text-center text-sm text-foreground shadow-sm max-w-[300px]">
-              The family paying off their house with a contract for deed missed one payment and was evicted, losing their home.
+              The family paying off their house with a contract for deed missed
+              one payment and was evicted, losing their home.
             </div>
           )}
 
           {year == 1 && (
             <div className="absolute left-1/2 top-[12%] z-20 -translate-x-1/2 rounded-lg bg-white/90 px-3 py-2 text-center text-sm text-foreground shadow-sm max-w-[300px]">
-              Families have moved in! Start moving the time slider to see what changes over the next 30 years.
+              Families have moved in! Start moving the time slider to see what
+              changes over the next 30 years.
             </div>
           )}
 
-          {(year > 8 && year < 15) && (
+          {year > 8 && year < 15 && (
             <div className="absolute left-1/2 top-[12%] z-20 -translate-x-1/2 rounded-lg bg-white/90 px-3 py-2 text-center text-sm text-foreground shadow-sm max-w-[300px]">
-              Both families have been making payments on time, but since the family with a contract for deed doesn't own their home yet, they don't have any equity yet.
+              Both families have been making payments on time, but since the
+              family with a contract for deed doesn't own their home yet, they
+              don't have any equity yet.
             </div>
           )}
 
           {year > 25 && (
             <div className="absolute left-1/2 top-[12%] z-20 -translate-x-1/2 rounded-lg bg-white/90 px-3 py-2 text-center text-sm text-foreground shadow-sm max-w-[300px]">
-              Home values are rising quickly! Because the mortgage family owns their home, the value of their investment is growing too.
+              Home values are rising quickly! Because the mortgage family owns
+              their home, the value of their investment is growing too.
             </div>
           )}
 
@@ -574,5 +598,5 @@ export function HomeownershipSimulation() {
         </div>
       </section>
     </TooltipProvider>
-  )
+  );
 }
