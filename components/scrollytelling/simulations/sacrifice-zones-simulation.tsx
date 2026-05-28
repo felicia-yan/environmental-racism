@@ -38,11 +38,11 @@ interface Protester {
 const NEIGHBORHOODS: Neighborhood[] = [
   {
     id: 1,
-    name: "Millbrook Heights",
+    name: "Millbrook",
     x: 0.15,
-    y: 0.5,
-    radius: 0.4,
-    circleRatio: 0.75,
+    y: 0.45,
+    radius: 0.35,
+    circleRatio: 0.5,
     wealth: 0.85,
   },
   {
@@ -59,14 +59,14 @@ const NEIGHBORHOODS: Neighborhood[] = [
     name: "Red Ridge",
     x: 0.56,
     y: 0.35,
-    radius: 0.3,
+    radius: 0.25,
     circleRatio: 0.8,
-    wealth: 0.3,
+    wealth: 0.1,
   },
   {
     id: 4,
     name: "South Cross",
-    x: 0.83,
+    x: 0.9,
     y: 0.56,
     radius: 0.3,
     circleRatio: 0.15,
@@ -84,7 +84,7 @@ function protesterCount(nh: Neighborhood, overlap: number): number {
   return Math.round(power * 8 + 1);
 }
 
-const MIN_PATH_LENGTH = 0.2;
+const MIN_PATH_LENGTH = 0.4;
 const OVERLAP_THRESHOLD = 0.25;
 const MIN_DRAW_Y = 0.3;
 
@@ -229,12 +229,10 @@ function NeighborhoodLabels({
     <>
       {NEIGHBORHOODS.map((nh) => {
         const isHit = (overlaps[nh.id] ?? 0) > 0.02;
-
-        // keep labels inside screen bounds
         const clampedX = Math.max(0.08, Math.min(0.92, nh.x));
-
-        // place label above neighborhood but not too high
         const labelY = Math.max(0.12, nh.y - nh.radius * 0.3);
+        const dollarCount = Math.max(1, Math.round(nh.wealth * 5));
+        const dollars = "$".repeat(dollarCount);
 
         return (
           <div
@@ -251,6 +249,9 @@ function NeighborhoodLabels({
             <div className="text-center">
               <div className="text-[10px] md:text-xs font-bold text-white drop-shadow-lg bg-black/60 px-2 py-1 rounded-full whitespace-nowrap border border-white/20">
                 {nh.name}
+              </div>
+              <div className="text-sm font-bold text-black-400 drop-shadow-lg mt-0.5">
+                {dollars}
               </div>
             </div>
           </div>
@@ -315,9 +316,9 @@ function ResultNotification({
   blockedBy: Neighborhood[];
 }) {
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10">
       <div
-        className={`px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-md text-sm max-w-[340px] ${
+        className={`px-5 py-4 rounded-2xl shadow-2xl border backdrop-blur-md text-sm max-w-[300px] ${
           approved
             ? "bg-green-500/90 border-green-300 text-white"
             : "bg-red-500/90 border-red-300 text-white"
@@ -336,12 +337,12 @@ function ResultNotification({
         </div>
 
         <div className="opacity-95 leading-relaxed flex gap-2">
-          <Route className="w-4 h-4 mt-0.5 shrink-0 opacity-90" />
+          {/* <Route className="w-4 h-4 mt-0.5 shrink-0 opacity-90" /> */}
 
           <div>
             {approved
               ? "The highway extension moved forward despite neighborhood impacts."
-              : "Opposition from nearby residents stopped the proposal."}
+              : "Opposition from nearby residents stopped the proposal from passing."}
           </div>
         </div>
 
@@ -377,10 +378,12 @@ function MapCanvas({
   path,
   setPath,
   locked,
+  debug,
 }: {
   path: Point[];
   setPath: (p: Point[] | ((prev: Point[]) => Point[])) => void;
   locked: boolean;
+  debug?: boolean;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
@@ -432,6 +435,20 @@ function MapCanvas({
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
       >
+        {debug &&
+          NEIGHBORHOODS.map((nh) => (
+            <circle
+              key={nh.id}
+              cx={nh.x * 100}
+              cy={nh.y * 100}
+              r={nh.radius * 100}
+              fill="none"
+              stroke="red"
+              strokeWidth="0.3"
+              strokeDasharray="1 1"
+              opacity="0.6"
+            />
+          ))}
         {path.length > 1 && (
           <>
             <polyline
@@ -464,6 +481,8 @@ export function SacrificeZonesSimulation() {
   const [path, setPath] = useState<Point[]>([]);
   const [locked, setLocked] = useState(false);
   const [result, setResult] = useState<null | boolean>(null);
+
+  const DEBUG = false; // for debugging
 
   const length = useMemo(() => pathLength(path), [path]);
 
@@ -522,7 +541,12 @@ export function SacrificeZonesSimulation() {
         <NeighborhoodLabels overlaps={overlaps} />
 
         {/* Road canvas BELOW protesters */}
-        <MapCanvas path={path} setPath={setPath} locked={locked} />
+        <MapCanvas
+          path={path}
+          setPath={setPath}
+          locked={locked}
+          debug={DEBUG}
+        />
 
         {/* Protesters ABOVE road */}
         {allProtesters.map((p) => (
@@ -555,6 +579,8 @@ export function SacrificeZonesSimulation() {
         >
           {path.length === 0 ? (
             "Draw your route"
+          ) : locked ? (
+            "Try again"
           ) : canSubmit ? (
             <>
               <Check className="w-4 h-4" />

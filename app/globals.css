@@ -205,6 +205,12 @@
   position: relative;
 }
 
+.distressed-text-normal {
+  font-family: "Stamp Theo", sans-serif;
+  letter-spacing: 0.05em;
+  position: relative;
+}
+
 /* Grass texture background */
 .grass-bg {
   background-color: var(--grass);
