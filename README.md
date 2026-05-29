@@ -11,4 +11,6 @@ An explorable explanation about environnmental racism and the historical and pol
 
 <img width="1440" height="760" alt="Screenshot 2026-05-29 at 11 19 37 AM" src="https://github.com/user-attachments/assets/c412eaf7-880d-4d21-bde2-3f007c20e9c0" />
 
+<img width="1440" height="760" alt="Screenshot 2026-05-29 at 11 23 38 AM" src="https://github.com/user-attachments/assets/b36f28c1-5df8-4a8c-adf1-97e662cd8ef4" />
+
 <img width="1440" height="759" alt="Screenshot 2026-05-29 at 11 20 04 AM" src="https://github.com/user-attachments/assets/45faec02-6c7b-4592-ab72-1d746a85e4fa" />
